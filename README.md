@@ -15,5 +15,5 @@ PlatformIO is more than just an IDE plugin — it’s a complete ecosystem for e
 
 ## Setup
 - Build the project. This will install all labs automatically
-- Inside .pio/libdeps replace User_Setup.h file of TFT_eSPI library, following the reference recommendation.
+- Inside .pio/libdeps replace User_Setup.h file of TFT_eSPI library by the one provided in references folder
 - Platformio finds your device port automatically when uploading. In case of any issues, you can check PIO Home -> Devices.
