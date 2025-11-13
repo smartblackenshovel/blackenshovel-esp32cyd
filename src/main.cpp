@@ -1,8 +1,13 @@
 #include <SPI.h>
 #include <TFT_eSPI.h>
 #include <XPT2046_Touchscreen.h>
-
-TFT_eSPI tft = TFT_eSPI();
+#include <WiFi.h>
+#include <WiFiClientSecure.h>
+#include <HTTPClient.h>
+#include <PNGdec.h>
+#include <TFT_eFEX.h>
+#include <SD.h>
+#include "DisplayHandler.h"
 
 #define XPT2046_IRQ 36
 #define XPT2046_MOSI 32
@@ -10,75 +15,125 @@ TFT_eSPI tft = TFT_eSPI();
 #define XPT2046_CLK 25
 #define XPT2046_CS 33
 
+#define SCREEN_WIDTH 240
+#define SCREEN_HEIGHT 320
+#define FONT_SIZE 2
+
+#define SD_CS 4
+
+TFT_eSPI tft = TFT_eSPI();
+TFT_eFEX fex = TFT_eFEX(&tft);
+
+PNG png;
+
+WiFiClientSecure securedClient;
+FileFetcher fileFetcher(securedClient);
+
 SPIClass touchscreenSPI = SPIClass(VSPI);
 XPT2046_Touchscreen touchscreen(XPT2046_CS, XPT2046_IRQ);
 
-#define SCREEN_WIDTH 320
-#define SCREEN_HEIGHT 240
-#define FONT_SIZE 2
-
 int x, y, z;
 
-void printTouchToSerial(int touchX, int touchY, int touchZ) {
-  Serial.print("X = ");
-  Serial.print(touchX);
-  Serial.print(" | Y = ");
-  Serial.print(touchY);
-  Serial.print(" | Pressure = ");
-  Serial.print(touchZ);
-  Serial.println();
-}
-
-void printTouchToDisplay(int touchX, int touchY, int touchZ) {
-  tft.fillScreen(TFT_WHITE);
-  tft.setTextColor(TFT_BLACK, TFT_WHITE);
-
-  int centerX = SCREEN_WIDTH / 2;
-  int textY = 80;
- 
-  String tempText = "X = " + String(touchX);
-  tft.drawCentreString(tempText, centerX, textY, FONT_SIZE);
-
-  textY += 20;
-  tempText = "Y = " + String(touchY);
-  tft.drawCentreString(tempText, centerX, textY, FONT_SIZE);
-
-  textY += 20;
-  tempText = "Pressure = " + String(touchZ);
-  tft.drawCentreString(tempText, centerX, textY, FONT_SIZE);
-}
+const char* ssid = "iPhone de Lauro";
+const char* password = "lolo1234";
 
 void setup() {
   Serial.begin(115200);
+
+  delay(1000);
+
+  Serial.println("Starting...");
 
   touchscreenSPI.begin(XPT2046_CLK, XPT2046_MISO, XPT2046_MOSI, XPT2046_CS);
   touchscreen.begin(touchscreenSPI);
   touchscreen.setRotation(1);
 
-  tft.init();
-  tft.setRotation(1);
+  WiFi.begin(ssid, password);
 
-  tft.fillScreen(TFT_WHITE);
-  tft.setTextColor(TFT_BLACK, TFT_WHITE);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.println(WiFi.localIP());
+
+  securedClient.setInsecure();
+
+  char url[] = "https://famous-insects-sniff.loca.lt/map?lat=47.2229&lon=8.8169";
+  char imageFileUri[] = IMAGE_NAME;
+
+  if (!SD.begin()) {
+    Serial.println("SD card failed");
+    return;
+  }
+
+  HTTPClient http;
   
-  int centerX = SCREEN_WIDTH / 2;
-  int centerY = SCREEN_HEIGHT / 2;
+  http.begin(url);
+  int code = http.GET();
 
-  tft.drawCentreString("Hello, world!", centerX, 30, FONT_SIZE);
-  tft.drawCentreString("Touch screen to test", centerX, centerY, FONT_SIZE);
+  if (code > 0) {
+    Serial.printf("Final HTTP code: %d\n", code);
+    if (code == HTTP_CODE_OK) {
+      WiFiClient* stream = http.getStreamPtr();
+      File file = SD.open("/test.jpg", FILE_WRITE);
+      if (!file) {
+        Serial.println("Failed to open file for writing");
+        http.end();
+        return;
+      }
+
+      uint8_t buffer[512];
+      Serial.println("Downloading image...");
+
+      while (http.connected() || stream->available()) {
+        size_t size = stream->available();
+        if (size) {
+          size_t c = stream->readBytes(buffer, (size > sizeof(buffer) ? sizeof(buffer) : size));
+          file.write(buffer, c);
+        }
+        delay(1);
+      }
+
+      file.close();
+      Serial.println("Download complete!");
+    }
+  } else {
+    Serial.printf("HTTP GET failed: %s\n", http.errorToString(code).c_str());
+  }
+  http.end();
+
+  fex.drawJpgFile(SD, "/test.jpg", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+  // File testFile = SD.open("/image.jpg", FILE_WRITE);
+  // if (testFile) {
+  //   testFile.println("Hello SD!");
+  //   testFile.close();
+  //   Serial.println("Write successful");
+  // } else {
+  //   Serial.println("Error opening file for writing");
+  // }
+  // Test reading the file
+  // File testFile = SD.open("/image.jpg");
+  // if (testFile) {
+  //   Serial.println("Reading file contents:");
+  //   while (testFile.available()) {
+  //     Serial.write(testFile.read());
+  //   }
+  //   testFile.close();
+  // } else {
+  //   Serial.println("Error opening file for reading");
+  // }
 }
+  //fex.drawJpeg("/image.jpg", 0, 0);
+
+  // DisplayImageHandler::init(tft, securedClient, fileFetcher);
+  // DisplayImageHandler::getImage(url);
+  // DisplayImageHandler::displayImage(imageFileUri);
+
+  
 
 void loop() {
-  if (touchscreen.tirqTouched() && touchscreen.touched()) {
-    TS_Point p = touchscreen.getPoint();
 
-    x = map(p.x, 200, 3700, 1, SCREEN_WIDTH);
-    y = map(p.y, 240, 3800, 1, SCREEN_HEIGHT);
-    z = p.z;
-
-    printTouchToSerial(x, y, z);
-    printTouchToDisplay(x, y, z);
-
-    delay(100);
-  }
 }
