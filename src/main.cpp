@@ -10,6 +10,7 @@
 #include "DisplayHandler.h"
 #include "HTTPHandler.h"
 #include <ArduinoJson.h>
+#include <vector>
 
 
 #define XPT2046_IRQ 36
@@ -39,45 +40,31 @@ int x, y, z;
 const char* ssid = "iPhone de Lauro";
 const char* password = "lolo1234";
 
-void drawMenu(
-    const String items[],   // list of Strings
-    int size,               // number of items
-    int itemHeight = 40,    // height of each row
-    uint16_t bgColor = TFT_DARKGREY,  // background color
-    uint16_t textColor = TFT_WHITE,   // text color
-    uint16_t borderColor = TFT_WHITE  // border color
-) {
-    tft.fillScreen(TFT_WHITE);
-    tft.setTextColor(TFT_BLACK, TFT_WHITE);
-
+void drawMenu(const std::vector<String>& items, int itemHeight = 40, uint16_t bgColor = TFT_DARKGREY, uint16_t textColor = TFT_WHITE, uint16_t borderColor = TFT_WHITE) {
+    tft.fillScreen(TFT_BLACK);
+    int size = items.size();
     for (int i = 0; i < size; i++) {
         int y = i * itemHeight;
-
-        // Background of each item
         tft.fillRect(0, y, tft.width(), itemHeight - 2, bgColor);
-
-        // Border
         tft.drawRect(0, y, tft.width(), itemHeight - 2, borderColor);
-
-        // Text
         tft.setTextDatum(MC_DATUM);
         tft.setTextColor(textColor);
-        tft.drawString(items[i], tft.width() / 2, y + itemHeight / 2);
+        tft.drawString(items[i], tft.width()/2, y + itemHeight/2);
     }
 }
 
+std::vector<String> extractValues(const String& jsonStr, const String& key) {
+    std::vector<String> result;
 
-
-void extractSerials(const String& jsonStr, String serials[], int &count, int maxCount) {
     StaticJsonDocument<2048> doc;
-    if (deserializeJson(doc, jsonStr) != DeserializationError::Ok) return;
+    if (deserializeJson(doc, jsonStr) != DeserializationError::Ok) return result;
 
     JsonArray arr = doc.as<JsonArray>();
-    count = 0;
     for (JsonObject obj : arr) {
-        if (count >= maxCount) break;
-        serials[count++] = String(obj["serial_number"].as<const char*>());
+        result.push_back(String(obj[key].as<const char*>()));
     }
+
+    return result;
 }
 
 void setup() {
@@ -140,16 +127,36 @@ void setup() {
   Serial.println("Shovels Response:");
   Serial.println(shovelsResponse);
 
-  String serials[20];
-  int shovelCount = 0;
-  extractSerials(shovelsResponse, serials, shovelCount, 20);
+  std::vector<String> shovelsSerialNumber = extractValues(shovelsResponse, "serial_number");
+  int shovelCount = shovelsSerialNumber.size();
+
   Serial.printf("Extracted %d serials:\n", shovelCount);
-  for (int i = 0; i < shovelCount; i++) {
-    Serial.println(serials[i]);
+  for (String shovelSerialNumber : shovelsSerialNumber) {
+    Serial.println(shovelSerialNumber);
   }
-  drawMenu(serials, shovelCount);
+  drawMenu(shovelsSerialNumber, shovelCount);
+
+  String selectedShovelSerial = "BS-#13823429-01";
+
+  auto selectedShovelIt = std::find(shovelsSerialNumber.begin(), shovelsSerialNumber.end(), selectedShovelSerial);
+  if (selectedShovelIt == shovelsSerialNumber.end()) {
+    Serial.println("Selected shovel not found!");
+    return;
+  }
+  int index = selectedShovelIt - shovelsSerialNumber.begin();
+  Serial.printf("Selected shovel index: %d\n", index);
 
   // Select User
+  String usersResponse = httpHandler.get(endpointUsers, {
+    {"organization_id", organizationId}
+  });
+  Serial.println("Users Response:");
+  Serial.println(usersResponse);
+
+  std::vector<String> userNames = extractValues(usersResponse, "name");
+  int userCount = userNames.size();
+  drawMenu(userNames, userCount);
+
 
   // Start Session
 
