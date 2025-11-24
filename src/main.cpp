@@ -9,6 +9,8 @@
 #include <SD.h>
 #include "DisplayHandler.h"
 #include "HTTPHandler.h"
+#include <ArduinoJson.h>
+
 
 #define XPT2046_IRQ 36
 #define XPT2046_MOSI 32
@@ -23,7 +25,6 @@
 #define SD_CS 4
 
 TFT_eSPI tft = TFT_eSPI();
-TFT_eFEX fex = TFT_eFEX(&tft);
 
 PNG png;
 
@@ -38,6 +39,47 @@ int x, y, z;
 const char* ssid = "iPhone de Lauro";
 const char* password = "lolo1234";
 
+void drawMenu(
+    const String items[],   // list of Strings
+    int size,               // number of items
+    int itemHeight = 40,    // height of each row
+    uint16_t bgColor = TFT_DARKGREY,  // background color
+    uint16_t textColor = TFT_WHITE,   // text color
+    uint16_t borderColor = TFT_WHITE  // border color
+) {
+    tft.fillScreen(TFT_WHITE);
+    tft.setTextColor(TFT_BLACK, TFT_WHITE);
+
+    for (int i = 0; i < size; i++) {
+        int y = i * itemHeight;
+
+        // Background of each item
+        tft.fillRect(0, y, tft.width(), itemHeight - 2, bgColor);
+
+        // Border
+        tft.drawRect(0, y, tft.width(), itemHeight - 2, borderColor);
+
+        // Text
+        tft.setTextDatum(MC_DATUM);
+        tft.setTextColor(textColor);
+        tft.drawString(items[i], tft.width() / 2, y + itemHeight / 2);
+    }
+}
+
+
+
+void extractSerials(const String& jsonStr, String serials[], int &count, int maxCount) {
+    StaticJsonDocument<2048> doc;
+    if (deserializeJson(doc, jsonStr) != DeserializationError::Ok) return;
+
+    JsonArray arr = doc.as<JsonArray>();
+    count = 0;
+    for (JsonObject obj : arr) {
+        if (count >= maxCount) break;
+        serials[count++] = String(obj["serial_number"].as<const char*>());
+    }
+}
+
 void setup() {
   Serial.begin(115200);
 
@@ -48,6 +90,8 @@ void setup() {
   touchscreenSPI.begin(XPT2046_CLK, XPT2046_MISO, XPT2046_MOSI, XPT2046_CS);
   touchscreen.begin(touchscreenSPI);
   touchscreen.setRotation(1);
+  tft.init();
+  tft.setRotation(1);
 
   WiFi.begin(ssid, password);
 
@@ -89,12 +133,27 @@ void setup() {
   Serial.println(mapResponse);
 
   // Select Shovel
+  String shovelsResponse = httpHandler.get(endpointShovels, {
+    {"organization_id", organizationId}
+  });
+
+  Serial.println("Shovels Response:");
+  Serial.println(shovelsResponse);
+
+  String serials[20];
+  int shovelCount = 0;
+  extractSerials(shovelsResponse, serials, shovelCount, 20);
+  Serial.printf("Extracted %d serials:\n", shovelCount);
+  for (int i = 0; i < shovelCount; i++) {
+    Serial.println(serials[i]);
+  }
+  drawMenu(serials, shovelCount);
 
   // Select User
 
   // Start Session
 
-  
+
   
 }
 
