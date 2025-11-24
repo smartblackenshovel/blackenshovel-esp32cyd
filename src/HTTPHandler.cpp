@@ -1,12 +1,12 @@
 #include "HTTPHandler.h"
 
-HttpHandler::HttpHandler(const String& baseUrl) : baseUrl(baseUrl) {}
+HTTPHandler::HTTPHandler(const String& baseUrl) : baseUrl(baseUrl) {}
 
-String HttpHandler::buildUrl(const String& endpoint) const {
+String HTTPHandler::buildUrl(const String& endpoint) const {
   return baseUrl + endpoint;
 }
 
-String HttpHandler::urlencode(const String& value) const {
+String HTTPHandler::urlencode(const String& value) const {
   String encoded = "";
   char c;
   char buf[4];
@@ -22,7 +22,7 @@ String HttpHandler::urlencode(const String& value) const {
   return encoded;
 }
 
-String HttpHandler::buildQueryParams(const String& endpoint,
+String HTTPHandler::buildQueryParams(const String& endpoint,
                                      const std::map<String, String>& params) const {
   String query = endpoint;
   if (!params.empty()) {
@@ -37,7 +37,7 @@ String HttpHandler::buildQueryParams(const String& endpoint,
   return query;
 }
 
-String HttpHandler::request(const String& endpoint, const String& method,
+String HTTPHandler::request(const String& endpoint, const String& method,
                             const String& payload, const String& contentType) {
   String url = buildUrl(endpoint);
   httpClient.begin(url);
@@ -82,23 +82,23 @@ String HttpHandler::request(const String& endpoint, const String& method,
   return response;
 }
 
-String HttpHandler::post(const String& endpoint, const String& payload,
+String HTTPHandler::post(const String& endpoint, const String& payload,
                          const String& contentType) {
   return request(endpoint, "POST", payload, contentType);
 }
 
-String HttpHandler::get(const String& endpoint,
+String HTTPHandler::get(const String& endpoint,
                         const std::map<String, String>& params,
                         const String& payload, const String& contentType) {
   String fullEndpoint = buildQueryParams(endpoint, params);
   return request(fullEndpoint, "GET", payload, contentType);
 }
 
-String HttpHandler::patch(const String& endpoint, const String& payload,
+String HTTPHandler::patch(const String& endpoint, const String& payload,
                           const String& contentType) {
   return request(endpoint, "PATCH", payload, contentType);
 }
 
-String HttpHandler::del(const String& endpoint) {
+String HTTPHandler::del(const String& endpoint) {
   return request(endpoint, "DELETE");
 }

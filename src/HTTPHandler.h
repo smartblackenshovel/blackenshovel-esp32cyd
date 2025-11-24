@@ -4,11 +4,11 @@
 
 #include <map>
 
-class HttpHandler {
+class HTTPHandler {
  public:
-  explicit HttpHandler(const String& baseUrl);
+  explicit HTTPHandler(const String& baseUrl);
 
-  bool getToFile(const String& endpoint, const String& outputStream);
+  //bool getToFile(const String& endpoint, const String& outputStream);
   String post(const String& endpoint, const String& payload,
               const String& contentType = "application/json");
   String get(const String& endpoint,
