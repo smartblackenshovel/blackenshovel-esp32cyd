@@ -6,7 +6,7 @@ String HTTPHandler::buildUrl(const String& endpoint) const {
   return baseUrl + endpoint;
 }
 
-String HTTPHandler::urlencode(const String& value) const {
+String HTTPHandler::encodeUrl(const String& value) const {
   String encoded = "";
   char c;
   char buf[4];
@@ -30,14 +30,14 @@ String HTTPHandler::buildQueryParams(const String& endpoint,
     bool first = true;
     for (const auto& pair : params) {
       if (!first) query += "&";
-      query += pair.first + "=" + urlencode(pair.second);
+      query += pair.first + "=" + encodeUrl(pair.second);
       first = false;
     }
   }
   return query;
 }
 
-String HTTPHandler::request(const String& endpoint, Method method,
+String HTTPHandler::request(Method method, const String& endpoint,
                             const String& payload, const String& contentType) {
   String url = buildUrl(endpoint);
   httpClient.begin(url);

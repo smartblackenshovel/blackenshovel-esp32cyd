@@ -24,7 +24,7 @@ class HTTPHandler {
   String request(Method method, const String& endpoint,
                  const String& payload = "", const String& contentType = "");
   String buildUrl(const String& endpoint) const;
-  String urlencode(const String& value) const;
+  String encodeUrl(const String& value) const;
   String buildQueryParams(const String& endpoint,
                           const std::map<String, String>& params) const;
 };
