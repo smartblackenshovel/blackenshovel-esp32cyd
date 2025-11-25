@@ -21,7 +21,7 @@ class HTTPHandler {
   String baseUrl;
   HTTPClient httpClient;
   enum Method { GET, POST, PATCH, PUT, DELETE };
-  String request(const String& endpoint, Method method,
+  String request(Method method, const String& endpoint,
                  const String& payload = "", const String& contentType = "");
   String buildUrl(const String& endpoint) const;
   String urlencode(const String& value) const;

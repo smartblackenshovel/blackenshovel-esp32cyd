@@ -76,20 +76,20 @@ String HTTPHandler::request(const String& endpoint, Method method,
 
 String HTTPHandler::post(const String& endpoint, const String& payload,
                          const String& contentType) {
-  return request(endpoint, Method::POST, payload, contentType);
+  return request(Method::POST, endpoint, payload, contentType);
 }
 
 String HTTPHandler::get(const String& endpoint,
                         const std::map<String, String>& params) {
   String fullEndpoint = buildQueryParams(endpoint, params);
-  return request(fullEndpoint, Method::GET);
+  return request(Method::GET, fullEndpoint);
 }
 
 String HTTPHandler::patch(const String& endpoint, const String& payload,
                           const String& contentType) {
-  return request(endpoint, Method::PATCH, payload, contentType);
+  return request(Method::PATCH, endpoint, payload, contentType);
 }
 
 String HTTPHandler::del(const String& endpoint) {
-  return request(endpoint, Method::DELETE);
+  return request(Method::DELETE, endpoint);
 }
