@@ -61,7 +61,7 @@ void setup() {
 
   securedClient.setInsecure();
 
-  char url[] = "https://cute-flowers-boil.loca.lt";
+  char url[] = "https://tiny-teeth-thank.loca.lt";
 
   char organizationId[] = "39eb05fa-f039-4404-a3dc-0ca5a1a47a6e";
 
@@ -83,10 +83,10 @@ void setup() {
 
   HTTPHandler httpHandler(url);
 
-  String mapResponse = httpHandler.get("/organizations");
+  HTTPResponse mapResponse = httpHandler.get("/organizations");
 
   Serial.println("Map Response:");
-  Serial.println(mapResponse);
+  Serial.println(mapResponse.getContent());
 
   // Select Shovel
 

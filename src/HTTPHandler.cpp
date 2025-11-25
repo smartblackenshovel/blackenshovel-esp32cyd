@@ -43,7 +43,7 @@ String HTTPHandler::buildQueryParams(const String& endpoint,
   return query;
 }
 
-String HTTPHandler::request(Method method, const String& endpoint,
+HTTPResponse HTTPHandler::request(Method method, const String& endpoint,
                             const String& payload, const String& contentType) {
   String url = buildUrl(endpoint);
   httpClient.begin(url);
@@ -77,25 +77,27 @@ String HTTPHandler::request(Method method, const String& endpoint,
   }
 
   httpClient.end();
-  return response;
+
+  HTTPResponse httpResponse(code, response);
+  return httpResponse;
 }
 
-String HTTPHandler::post(const String& endpoint, const String& payload,
+HTTPResponse HTTPHandler::post(const String& endpoint, const String& payload,
                          const String& contentType) {
   return request(Method::POST, endpoint, payload, contentType);
 }
 
-String HTTPHandler::get(const String& endpoint,
+HTTPResponse HTTPHandler::get(const String& endpoint,
                         const std::map<String, String>& params) {
   String fullEndpoint = buildQueryParams(endpoint, params);
   return request(Method::GET, fullEndpoint);
 }
 
-String HTTPHandler::patch(const String& endpoint, const String& payload,
+HTTPResponse HTTPHandler::patch(const String& endpoint, const String& payload,
                           const String& contentType) {
   return request(Method::PATCH, endpoint, payload, contentType);
 }
 
-String HTTPHandler::del(const String& endpoint) {
+HTTPResponse HTTPHandler::del(const String& endpoint) {
   return request(Method::DELETE, endpoint);
 }
