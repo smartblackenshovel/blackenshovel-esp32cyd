@@ -3,10 +3,16 @@
 HTTPHandler::HTTPHandler(const String& baseUrl) : baseUrl(baseUrl) {}
 
 String HTTPHandler::buildUrl(const String& endpoint) const {
-  return baseUrl + endpoint;
+  if (baseUrl.endsWith("/") && endpoint.startsWith("/")) {
+        return baseUrl + endpoint.substring(1);
+    } else if (!baseUrl.endsWith("/") && !endpoint.startsWith("/")) {
+        return baseUrl + "/" + endpoint;
+    } else {
+        return baseUrl + endpoint;
+    }
 }
 
-String HTTPHandler::urlencode(const String& value) const {
+String HTTPHandler::encodeUrl(const String& value) const {
   String encoded = "";
   char c;
   char buf[4];
@@ -30,75 +36,68 @@ String HTTPHandler::buildQueryParams(const String& endpoint,
     bool first = true;
     for (const auto& pair : params) {
       if (!first) query += "&";
-      query += pair.first + "=" + urlencode(pair.second);
+      query += pair.first + "=" + encodeUrl(pair.second);
       first = false;
     }
   }
   return query;
 }
 
-String HTTPHandler::request(const String& endpoint, const String& method,
+HTTPResponse HTTPHandler::request(Method method, const String& endpoint,
                             const String& payload, const String& contentType) {
   String url = buildUrl(endpoint);
   httpClient.begin(url);
 
   int code = -1;
 
-  if (method == "POST" || method == "PATCH" || method == "PUT" ||
-      (method == "GET" && payload.length() > 0)) {
-    httpClient.addHeader("Content-Type", contentType);
-  }
-
-  if (method == "GET") {
-    if (payload.length() > 0) {
-      code = httpClient.sendRequest("GET", payload);
-    } else {
+  switch (method) {
+    case GET:
       code = httpClient.GET();
-    }
-  } else if (method == "POST") {
-    code = httpClient.POST(payload);
-  } else if (method == "PATCH") {
-    code = httpClient.sendRequest("PATCH", payload);
-  } else if (method == "PUT") {
-    code = httpClient.PUT(payload);
-  } else if (method == "DELETE") {
-    code = httpClient.sendRequest("DELETE");
-  } else {
-    Serial.printf("Unsupported HTTP method: %s\n", method.c_str());
-    httpClient.end();
-    return "";
+      break;
+    case POST:
+      httpClient.addHeader("Content-Type", contentType);
+      code = httpClient.POST(payload);
+      break;
+    case PATCH:
+      httpClient.addHeader("Content-Type", contentType);
+      code = httpClient.sendRequest("PATCH", payload);
+      break;
+    case PUT:
+      httpClient.addHeader("Content-Type", contentType);
+      code = httpClient.PUT(payload);
+      break;
+    case DELETE:
+      code = httpClient.sendRequest("DELETE");
+      break;
   }
 
   String response;
   if (code > 0) {
-    Serial.printf("%s %s -> Code: %d\n", method.c_str(), url.c_str(), code);
     response = httpClient.getString();
-  } else {
-    Serial.printf("HTTP %s failed: %s\n", method.c_str(),
-                  httpClient.errorToString(code).c_str());
   }
 
   httpClient.end();
-  return response;
+
+  HTTPResponse httpResponse(code, response);
+  return httpResponse;
 }
 
-String HTTPHandler::post(const String& endpoint, const String& payload,
+HTTPResponse HTTPHandler::post(const String& endpoint, const String& payload,
                          const String& contentType) {
-  return request(endpoint, "POST", payload, contentType);
+  return request(Method::POST, endpoint, payload, contentType);
 }
 
-String HTTPHandler::get(const String& endpoint,
-                        const std::map<String, String>& params,
-                        const String& payload, const String& contentType) {
+HTTPResponse HTTPHandler::get(const String& endpoint,
+                        const std::map<String, String>& params) {
   String fullEndpoint = buildQueryParams(endpoint, params);
-  return request(fullEndpoint, "GET", payload, contentType);
+  return request(Method::GET, fullEndpoint);
 }
 
-String HTTPHandler::patch(const String& endpoint, const String& payload,
+HTTPResponse HTTPHandler::patch(const String& endpoint, const String& payload,
                           const String& contentType) {
-  return request(endpoint, "PATCH", payload, contentType);
+  return request(Method::PATCH, endpoint, payload, contentType);
 }
 
-String HTTPHandler::del(const String& endpoint) {
-  return request(endpoint, "DELETE");
+HTTPResponse HTTPHandler::del(const String& endpoint) {
+  return request(Method::DELETE, endpoint);
 }
