@@ -12,9 +12,7 @@ class HTTPHandler {
   String post(const String& endpoint, const String& payload,
               const String& contentType = "application/json");
   String get(const String& endpoint,
-             const std::map<String, String>& params = {},
-             const String& payload = "",
-             const String& contentType = "application/json");
+             const std::map<String, String>& params = {});
   String patch(const String& endpoint, const String& payload,
                const String& contentType = "application/json");
   String del(const String& endpoint);

@@ -80,10 +80,9 @@ String HTTPHandler::post(const String& endpoint, const String& payload,
 }
 
 String HTTPHandler::get(const String& endpoint,
-                        const std::map<String, String>& params,
-                        const String& payload, const String& contentType) {
+                        const std::map<String, String>& params) {
   String fullEndpoint = buildQueryParams(endpoint, params);
-  return request(fullEndpoint, Method::GET, payload, contentType);
+  return request(fullEndpoint, Method::GET);
 }
 
 String HTTPHandler::patch(const String& endpoint, const String& payload,
