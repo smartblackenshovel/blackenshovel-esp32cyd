@@ -44,11 +44,6 @@ String HTTPHandler::request(const String& endpoint, const String& method,
 
   int code = -1;
 
-  if (method == "POST" || method == "PATCH" || method == "PUT" ||
-      (method == "GET" && payload.length() > 0)) {
-    httpClient.addHeader("Content-Type", contentType);
-  }
-
   if (method == "GET") {
     if (payload.length() > 0) {
       code = httpClient.sendRequest("GET", payload);
@@ -56,10 +51,13 @@ String HTTPHandler::request(const String& endpoint, const String& method,
       code = httpClient.GET();
     }
   } else if (method == "POST") {
+    httpClient.addHeader("Content-Type", contentType);
     code = httpClient.POST(payload);
   } else if (method == "PATCH") {
+    httpClient.addHeader("Content-Type", contentType);
     code = httpClient.sendRequest("PATCH", payload);
   } else if (method == "PUT") {
+    httpClient.addHeader("Content-Type", contentType);
     code = httpClient.PUT(payload);
   } else if (method == "DELETE") {
     code = httpClient.sendRequest("DELETE");
