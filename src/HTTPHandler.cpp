@@ -3,7 +3,13 @@
 HTTPHandler::HTTPHandler(const String& baseUrl) : baseUrl(baseUrl) {}
 
 String HTTPHandler::buildUrl(const String& endpoint) const {
-  return baseUrl + endpoint;
+  if (baseUrl.endsWith("/") && endpoint.startsWith("/")) {
+        return baseUrl + endpoint.substring(1);
+    } else if (!baseUrl.endsWith("/") && !endpoint.startsWith("/")) {
+        return baseUrl + "/" + endpoint;
+    } else {
+        return baseUrl + endpoint;
+    }
 }
 
 String HTTPHandler::encodeUrl(const String& value) const {
