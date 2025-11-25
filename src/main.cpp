@@ -8,6 +8,7 @@
 #include <TFT_eFEX.h>
 #include <SD.h>
 #include "DisplayHandler.h"
+#include "HTTPHandler.h"
 
 #define XPT2046_IRQ 36
 #define XPT2046_MOSI 32
@@ -60,7 +61,19 @@ void setup() {
 
   securedClient.setInsecure();
 
-  char url[] = "https://famous-insects-sniff.loca.lt/map?lat=47.2229&lon=8.8169";
+  char url[] = "https://tiny-teeth-thank.loca.lt";
+
+  char organizationId[] = "39eb05fa-f039-4404-a3dc-0ca5a1a47a6e";
+
+  char endpointOrganizations[] = "/organizations";
+  char endpointShovels[] = "/shovels";
+  char endpointUsers[] = "/users";
+  char endpointSpots[] = "/spots";
+  char endpointSessions[] = "/sessions";
+  char endpointSpotLogs[] = "/spot_logs";
+  char endpointSessionLogs[] = "/session_logs";
+
+  char mapEndpoint[] = "/map?lat=47.2229&lon=8.8169";
   char imageFileUri[] = IMAGE_NAME;
 
   if (!SD.begin()) {
@@ -68,71 +81,22 @@ void setup() {
     return;
   }
 
-  HTTPClient http;
+  HTTPHandler httpHandler(url);
+
+  HTTPResponse mapResponse = httpHandler.get("/organizations");
+
+  Serial.println("Map Response:");
+  Serial.println(mapResponse.getContent());
+
+  // Select Shovel
+
+  // Select User
+
+  // Start Session
+
   
-  http.begin(url);
-  int code = http.GET();
-
-  if (code > 0) {
-    Serial.printf("Final HTTP code: %d\n", code);
-    if (code == HTTP_CODE_OK) {
-      WiFiClient* stream = http.getStreamPtr();
-      File file = SD.open("/test.jpg", FILE_WRITE);
-      if (!file) {
-        Serial.println("Failed to open file for writing");
-        http.end();
-        return;
-      }
-
-      uint8_t buffer[512];
-      Serial.println("Downloading image...");
-
-      while (http.connected() || stream->available()) {
-        size_t size = stream->available();
-        if (size) {
-          size_t c = stream->readBytes(buffer, (size > sizeof(buffer) ? sizeof(buffer) : size));
-          file.write(buffer, c);
-        }
-        delay(1);
-      }
-
-      file.close();
-      Serial.println("Download complete!");
-    }
-  } else {
-    Serial.printf("HTTP GET failed: %s\n", http.errorToString(code).c_str());
-  }
-  http.end();
-
-  fex.drawJpgFile(SD, "/test.jpg", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-
-  // File testFile = SD.open("/image.jpg", FILE_WRITE);
-  // if (testFile) {
-  //   testFile.println("Hello SD!");
-  //   testFile.close();
-  //   Serial.println("Write successful");
-  // } else {
-  //   Serial.println("Error opening file for writing");
-  // }
-  // Test reading the file
-  // File testFile = SD.open("/image.jpg");
-  // if (testFile) {
-  //   Serial.println("Reading file contents:");
-  //   while (testFile.available()) {
-  //     Serial.write(testFile.read());
-  //   }
-  //   testFile.close();
-  // } else {
-  //   Serial.println("Error opening file for reading");
-  // }
+  
 }
-  //fex.drawJpeg("/image.jpg", 0, 0);
-
-  // DisplayImageHandler::init(tft, securedClient, fileFetcher);
-  // DisplayImageHandler::getImage(url);
-  // DisplayImageHandler::displayImage(imageFileUri);
-
-  
 
 void loop() {
 
