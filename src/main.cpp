@@ -114,20 +114,20 @@ void setup() {
 
   HTTPHandler httpHandler(url);
 
-  HTTPResponse mapResponse = httpHandler.get("/organizations");
+  HTTPResponse organizationsResponse = httpHandler.get("/organizations");
 
-  Serial.println("Map Response:");
-  Serial.println(mapResponse.getContent());
+  Serial.println("Organizations Response:");
+  Serial.println(organizationsResponse.getContent());
 
   // Select Shovel
-  String shovelsResponse = httpHandler.get(endpointShovels, {
+  HTTPResponse shovelsResponse = httpHandler.get(endpointShovels, {
     {"organization_id", organizationId}
   });
 
   Serial.println("Shovels Response:");
-  Serial.println(shovelsResponse);
+  Serial.println(shovelsResponse.getContent());
 
-  std::vector<String> shovelsSerialNumber = extractValues(shovelsResponse, "serial_number");
+  std::vector<String> shovelsSerialNumber = extractValues(shovelsResponse.getContent(), "serial_number");
   int shovelCount = shovelsSerialNumber.size();
 
   Serial.printf("Extracted %d serials:\n", shovelCount);
@@ -147,21 +147,28 @@ void setup() {
   Serial.printf("Selected shovel index: %d\n", index);
 
   // Select User
-  String usersResponse = httpHandler.get(endpointUsers, {
+  HTTPResponse usersResponse = httpHandler.get(endpointUsers, {
     {"organization_id", organizationId}
   });
   Serial.println("Users Response:");
-  Serial.println(usersResponse);
+  Serial.println(usersResponse.getContent());
 
-  std::vector<String> userNames = extractValues(usersResponse, "name");
+  std::vector<String> userNames = extractValues(usersResponse.getContent(), "name");
   int userCount = userNames.size();
   drawMenu(userNames, userCount);
 
 
   // Start Session
 
+  std::map<String, String> sessionPayload = {
+    {"user_id", ""},
+    {"shovel_id", ""}
+  };
 
-  
+  HTTPResponse startSessionResponse = httpHandler.post(
+    endpointSessions,
+    sessionPayload
+  );
 }
 
 void loop() {

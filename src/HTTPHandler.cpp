@@ -43,6 +43,18 @@ String HTTPHandler::buildQueryParams(const String& endpoint,
   return query;
 }
 
+String mapToJsonString(const std::map<String, String>& data) {
+  String json = "{";
+  bool first = true;
+  for (const auto& pair : data) {
+    if (!first) json += ",";
+    json += "\"" + pair.first + "\":\"" + pair.second + "\"";
+    first = false;
+  }
+  json += "}";
+  return json;
+}
+
 HTTPResponse HTTPHandler::request(Method method, const String& endpoint,
                             const String& payload, const String& contentType) {
   String url = buildUrl(endpoint);
@@ -82,9 +94,9 @@ HTTPResponse HTTPHandler::request(Method method, const String& endpoint,
   return httpResponse;
 }
 
-HTTPResponse HTTPHandler::post(const String& endpoint, const String& payload,
+HTTPResponse HTTPHandler::post(const String& endpoint, const std::map<String, String>& payload,
                          const String& contentType) {
-  return request(Method::POST, endpoint, payload, contentType);
+  return request(Method::POST, endpoint, mapToJsonString(payload), contentType);
 }
 
 HTTPResponse HTTPHandler::get(const String& endpoint,
@@ -93,9 +105,9 @@ HTTPResponse HTTPHandler::get(const String& endpoint,
   return request(Method::GET, fullEndpoint);
 }
 
-HTTPResponse HTTPHandler::patch(const String& endpoint, const String& payload,
+HTTPResponse HTTPHandler::patch(const String& endpoint, const std::map<String, String>& payload,
                           const String& contentType) {
-  return request(Method::PATCH, endpoint, payload, contentType);
+  return request(Method::PATCH, endpoint, mapToJsonString(payload), contentType);
 }
 
 HTTPResponse HTTPHandler::del(const String& endpoint) {
