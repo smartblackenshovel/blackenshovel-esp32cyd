@@ -9,11 +9,11 @@ class HTTPHandler {
  public:
   explicit HTTPHandler(const String& baseUrl);
 
-  HTTPResponse post(const String& endpoint, const std::map<String, String>& payload,
+  HTTPResponse post(const String& endpoint, const JsonDocument& payload,
               const String& contentType = "application/json");
   HTTPResponse get(const String& endpoint,
              const std::map<String, String>& params = {});
-  HTTPResponse patch(const String& endpoint, const std::map<String, String>& payload,
+  HTTPResponse patch(const String& endpoint, const JsonDocument& payload,
                const String& contentType = "application/json");
   HTTPResponse del(const String& endpoint);
 
