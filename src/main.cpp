@@ -26,15 +26,13 @@
 
 #define HTTP_ACTIVE 0
 
+SPIClass touchscreenSPI = SPIClass(VSPI);
+XPT2046_Touchscreen touchscreen(XPT2046_CS, XPT2046_IRQ);
+
 #define DRAW_BUF_SIZE (SCREEN_WIDTH * SCREEN_HEIGHT / 10 * (LV_COLOR_DEPTH / 8))
 uint32_t draw_buf[DRAW_BUF_SIZE / 4];
 
-TFT_eSPI tft = TFT_eSPI();
-
 WiFiClientSecure securedClient;
-
-SPIClass touchscreenSPI = SPIClass(VSPI);
-XPT2046_Touchscreen touchscreen(XPT2046_CS, XPT2046_IRQ);
 
 int x, y, z;
 
@@ -62,17 +60,11 @@ HTTPHandler httpHandler(url);
 
 bool selectedUser = false;
 
-void drawMenu(const std::vector<String>& items, int itemHeight = 40, uint16_t bgColor = TFT_DARKGREY, uint16_t textColor = TFT_WHITE, uint16_t borderColor = TFT_WHITE) {
-    tft.fillScreen(TFT_BLACK);
-    int size = items.size();
-    for (int i = 0; i < size; i++) {
-        int y = i * itemHeight;
-        tft.fillRect(0, y, tft.width(), itemHeight - 2, bgColor);
-        tft.drawRect(0, y, tft.width(), itemHeight - 2, borderColor);
-        tft.setTextDatum(MC_DATUM);
-        tft.setTextColor(textColor);
-        tft.drawString(items[i], tft.width()/2, y + itemHeight/2);
-    }
+// If logging is enabled, it will inform the user about what is happening in the library
+void log_print(lv_log_level_t level, const char * buf) {
+  LV_UNUSED(level);
+  Serial.println(buf);
+  Serial.flush();
 }
 
 // Get the Touchscreen data
@@ -82,8 +74,8 @@ void touchscreen_read(lv_indev_t * indev, lv_indev_data_t * data) {
     // Get Touchscreen points
     TS_Point p = touchscreen.getPoint();
     // Calibrate Touchscreen points with map function to the correct width and height
-    x = map(p.x, 200, 3700, 0, SCREEN_WIDTH);
-    y = map(p.y, 240, 3800, 0, SCREEN_HEIGHT);
+    x = map(p.x, 200, 3700, 1, SCREEN_WIDTH);
+    y = map(p.y, 240, 3800, 1, SCREEN_HEIGHT);
     z = p.z;
 
     data->state = LV_INDEV_STATE_PRESSED;
@@ -93,24 +85,17 @@ void touchscreen_read(lv_indev_t * indev, lv_indev_data_t * data) {
     data->point.y = y;
 
     // Print Touchscreen info about X, Y and Pressure (Z) on the Serial Monitor
-    Serial.print("X = ");
+    /* Serial.print("X = ");
     Serial.print(x);
     Serial.print(" | Y = ");
     Serial.print(y);
     Serial.print(" | Pressure = ");
     Serial.print(z);
-    Serial.println();
+    Serial.println();*/
   }
   else {
     data->state = LV_INDEV_STATE_RELEASED;
   }
-}
-
-// If logging is enabled, it will inform the user about what is happening in the library
-void log_print(lv_log_level_t level, const char * buf) {
-  LV_UNUSED(level);
-  Serial.println(buf);
-  Serial.flush();
 }
 
 int btn1_count = 0;
@@ -119,7 +104,7 @@ static void event_handler_btn1(lv_event_t * e) {
   lv_event_code_t code = lv_event_get_code(e);
   if(code == LV_EVENT_CLICKED) {
     btn1_count++;
-    LV_LOG_USER("Button clicked %d%", (int)btn1_count);
+    LV_LOG_USER("Button clicked %d", (int)btn1_count);
   }
 }
 
@@ -200,21 +185,7 @@ String currentTime() {
 void setup() {
   Serial.begin(115200);
 
-  delay(1000);
-
   Serial.println("Starting...");
-
-  //-------------------------------------------------------------------------------------
-
-  Serial.println("Initializing touchscreen and TFT...");
-
-  touchscreenSPI.begin(XPT2046_CLK, XPT2046_MISO, XPT2046_MOSI, XPT2046_CS);
-  touchscreen.begin(touchscreenSPI);
-  touchscreen.setRotation(0);
-
-  tft.init();
-  tft.setRotation(0);
-  tft.fillScreen(TFT_BLACK);
 
   //-------------------------------------------------------------------------------------
 
@@ -223,19 +194,34 @@ void setup() {
   Serial.println(LVGL_Arduino);
   lv_init();
   lv_log_register_print_cb(log_print);
+  Serial.println("LVGL initialized.");
 
-  lv_display_t* disp;
+  //-------------------------------------------------------------------------------------
+
+  Serial.println("Initializing touchscreen and TFT...");
+  
+  touchscreenSPI.begin(XPT2046_CLK, XPT2046_MISO, XPT2046_MOSI, XPT2046_CS);
+  touchscreen.begin(touchscreenSPI);
+  touchscreen.setRotation(2);
+
+  //-------------------------------------------------------------------------------------
+
+  Serial.println("Configuring LVGL Library...");
+
+  lv_display_t * disp;
   disp = lv_tft_espi_create(SCREEN_WIDTH, SCREEN_HEIGHT, draw_buf, sizeof(draw_buf));
   lv_display_set_rotation(disp, LV_DISPLAY_ROTATION_270);
 
-  lv_indev_t* indev = lv_indev_create();
+  lv_indev_t * indev = lv_indev_create();
   lv_indev_set_type(indev, LV_INDEV_TYPE_POINTER);
   lv_indev_set_read_cb(indev, touchscreen_read);
 
   lv_create_main_gui();
 
-  //-------------------------------------------------------------------------------------
+  Serial.println("LVGL configured.");
 
+  //-------------------------------------------------------------------------------------
+  #if HTTP_ACTIVE
   Serial.println("Connecting to WiFi...");
 
   WiFi.begin(ssid, password);
@@ -249,7 +235,7 @@ void setup() {
   Serial.println(WiFi.localIP());
 
   securedClient.setInsecure();
-
+  
   //-------------------------------------------------------------------------------------
 
   Serial.println("Syncing time...");
@@ -261,7 +247,7 @@ void setup() {
     Serial.print(".");
   }
   Serial.println("Time initialized.");
-
+  #endif
   //-------------------------------------------------------------------------------------
 
   Serial.println("Initializing SD card...");
