@@ -189,6 +189,17 @@ void setup() {
 
   //-------------------------------------------------------------------------------------
 
+  Serial.println("Initializing SD card...");
+
+  if (!SD.begin()) {
+    Serial.println("SD card failed");
+    return;
+  }
+
+  Serial.println("SD card initialized."); // Important to have SD card initialized before TFT_eSPI
+
+  //-------------------------------------------------------------------------------------
+
   Serial.println("Initializing LVGL Library...");
   String LVGL_Arduino = String("LVGL Library Version: ") + lv_version_major() + "." + lv_version_minor() + "." + lv_version_patch();
   Serial.println(LVGL_Arduino);
@@ -249,17 +260,7 @@ void setup() {
   Serial.println("Time initialized.");
   #endif
   //-------------------------------------------------------------------------------------
-
-  Serial.println("Initializing SD card...");
-
-  if (!SD.begin()) {
-    Serial.println("SD card failed");
-    return;
-  }
-
-  Serial.println("SD card initialized.");
-
-  //-------------------------------------------------------------------------------------
+  
   #if HTTP_ACTIVE
   Serial.println("Fetching Shovel...");
   HTTPResponse shovelsResponse = httpHandler.get(endpointShovels, {
