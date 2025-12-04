@@ -31,6 +31,7 @@ XPT2046_Touchscreen touchscreen(XPT2046_CS, XPT2046_IRQ);
 
 #define DRAW_BUF_SIZE (SCREEN_WIDTH * SCREEN_HEIGHT / 10 * (LV_COLOR_DEPTH / 8))
 uint32_t draw_buf[DRAW_BUF_SIZE / 4];
+static void nextScreen(String userName);
 
 WiFiClientSecure securedClient;
 
@@ -83,15 +84,6 @@ void touchscreen_read(lv_indev_t * indev, lv_indev_data_t * data) {
     // Set the coordinates
     data->point.x = x;
     data->point.y = y;
-
-    // Print Touchscreen info about X, Y and Pressure (Z) on the Serial Monitor
-    /* Serial.print("X = ");
-    Serial.print(x);
-    Serial.print(" | Y = ");
-    Serial.print(y);
-    Serial.print(" | Pressure = ");
-    Serial.print(z);
-    Serial.println();*/
   }
   else {
     data->state = LV_INDEV_STATE_RELEASED;
@@ -117,7 +109,6 @@ static void event_handler_btn2(lv_event_t * e) {
     LV_LOG_USER("Toggled %s", lv_obj_has_state(obj, LV_STATE_CHECKED) ? "on" : "off");
   }
 }
-
 static lv_obj_t * slider_label;
 // Callback that prints the current slider value on the TFT display and Serial Monitor for debugging purposes
 static void slider_event_callback(lv_event_t * e) {
@@ -129,48 +120,99 @@ static void slider_event_callback(lv_event_t * e) {
   LV_LOG_USER("Slider changed to %d%%", (int)lv_slider_get_value(slider));
 }
 
+static lv_obj_t * user_list;
+static void event_handler(lv_event_t * e) {
+  lv_event_code_t code = lv_event_get_code(e);
+  lv_obj_t * obj = (lv_obj_t*) lv_event_get_target(e);
+  if(code == LV_EVENT_CLICKED) {
+    LV_LOG_USER("List item clicked: %s", lv_list_get_btn_text(user_list, obj));
+    nextScreen(String(lv_list_get_btn_text(user_list, obj)));
+  }
+}
+
 void lv_create_main_gui(void) {
   // Create a text label aligned center on top ("Hello, world!")
-  lv_obj_t * text_label = lv_label_create(lv_screen_active());
-  lv_label_set_long_mode(text_label, LV_LABEL_LONG_WRAP);    // Breaks the long lines
-  lv_label_set_text(text_label, "Hello, world!");
-  lv_obj_set_width(text_label, 150);    // Set smaller width to make the lines wrap
-  lv_obj_set_style_text_align(text_label, LV_TEXT_ALIGN_CENTER, 0);
-  lv_obj_align(text_label, LV_ALIGN_CENTER, 0, -90);
+  // lv_obj_t * text_label = lv_label_create(lv_screen_active());
+  // lv_label_set_long_mode(text_label, LV_LABEL_LONG_WRAP);    // Breaks the long lines
+  // lv_label_set_text(text_label, "Hello, world!");
+  // lv_obj_set_width(text_label, 150);    // Set smaller width to make the lines wrap
+  // lv_obj_set_style_text_align(text_label, LV_TEXT_ALIGN_CENTER, 0);
+  // lv_obj_align(text_label, LV_ALIGN_CENTER, 0, -90);
 
-  lv_obj_t * btn_label;
-  // Create a Button (btn1)
-  lv_obj_t * btn1 = lv_button_create(lv_screen_active());
-  lv_obj_add_event_cb(btn1, event_handler_btn1, LV_EVENT_ALL, NULL);
-  lv_obj_align(btn1, LV_ALIGN_CENTER, 0, -50);
-  lv_obj_remove_flag(btn1, LV_OBJ_FLAG_PRESS_LOCK);
+  // lv_obj_t * btn_label;
+  // // Create a Button (btn1)
+  // lv_obj_t * btn1 = lv_button_create(lv_screen_active());
+  // lv_obj_add_event_cb(btn1, event_handler_btn1, LV_EVENT_ALL, NULL);
+  // lv_obj_align(btn1, LV_ALIGN_CENTER, 0, -50);
+  // lv_obj_remove_flag(btn1, LV_OBJ_FLAG_PRESS_LOCK);
 
-  btn_label = lv_label_create(btn1);
-  lv_label_set_text(btn_label, "Button");
-  lv_obj_center(btn_label);
+  // btn_label = lv_label_create(btn1);
+  // lv_label_set_text(btn_label, "Button");
+  // lv_obj_center(btn_label);
 
-  // Create a Toggle button (btn2)
-  lv_obj_t * btn2 = lv_button_create(lv_screen_active());
-  lv_obj_add_event_cb(btn2, event_handler_btn2, LV_EVENT_ALL, NULL);
-  lv_obj_align(btn2, LV_ALIGN_CENTER, 0, 10);
-  lv_obj_add_flag(btn2, LV_OBJ_FLAG_CHECKABLE);
-  lv_obj_set_height(btn2, LV_SIZE_CONTENT);
+  // // Create a Toggle button (btn2)
+  // lv_obj_t * btn2 = lv_button_create(lv_screen_active());
+  // lv_obj_add_event_cb(btn2, event_handler_btn2, LV_EVENT_ALL, NULL);
+  // lv_obj_align(btn2, LV_ALIGN_CENTER, 0, 10);
+  // lv_obj_add_flag(btn2, LV_OBJ_FLAG_CHECKABLE);
+  // lv_obj_set_height(btn2, LV_SIZE_CONTENT);
 
-  btn_label = lv_label_create(btn2);
-  lv_label_set_text(btn_label, "Toggle");
-  lv_obj_center(btn_label);
+  // btn_label = lv_label_create(btn2);
+  // lv_label_set_text(btn_label, "Toggle");
+  // lv_obj_center(btn_label);
   
-  // Create a slider aligned in the center bottom of the TFT display
-  lv_obj_t * slider = lv_slider_create(lv_screen_active());
-  lv_obj_align(slider, LV_ALIGN_CENTER, 0, 60);
-  lv_obj_add_event_cb(slider, slider_event_callback, LV_EVENT_VALUE_CHANGED, NULL);
-  lv_slider_set_range(slider, 0, 100);
-  lv_obj_set_style_anim_duration(slider, 2000, 0);
+  // // Create a slider aligned in the center bottom of the TFT display
+  // lv_obj_t * slider = lv_slider_create(lv_screen_active());
+  // lv_obj_align(slider, LV_ALIGN_CENTER, 0, 60);
+  // lv_obj_add_event_cb(slider, slider_event_callback, LV_EVENT_VALUE_CHANGED, NULL);
+  // lv_slider_set_range(slider, 0, 100);
+  // lv_obj_set_style_anim_duration(slider, 2000, 0);
 
-  // Create a label below the slider to display the current slider value
-  slider_label = lv_label_create(lv_screen_active());
-  lv_label_set_text(slider_label, "0%");
-  lv_obj_align_to(slider_label, slider, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
+  // // Create a label below the slider to display the current slider value
+  // slider_label = lv_label_create(lv_screen_active());
+  // lv_label_set_text(slider_label, "0%");
+  // lv_obj_align_to(slider_label, slider, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
+
+  // Create a user selector list
+  user_list = lv_list_create(lv_screen_active());
+  lv_obj_set_size(user_list, SCREEN_WIDTH - 20, SCREEN_HEIGHT / 3);
+  lv_obj_center(user_list);
+
+  lv_obj_t * btn;
+  
+  lv_list_add_text(user_list, "User Selection");
+  btn = lv_list_add_btn(user_list, LV_SYMBOL_FILE, "User 1");
+  lv_obj_add_event_cb(btn, event_handler, LV_EVENT_ALL, NULL);
+  btn = lv_list_add_btn(user_list, LV_SYMBOL_FILE, "User 2");
+  lv_obj_add_event_cb(btn, event_handler, LV_EVENT_ALL, NULL);
+  btn = lv_list_add_btn(user_list, LV_SYMBOL_FILE, "User 3");
+  lv_obj_add_event_cb(btn, event_handler, LV_EVENT_ALL, NULL);
+
+
+}
+
+static void lv_demo_printer_anim_out_all(lv_obj_t * obj, uint32_t delay) {
+    lv_obj_t * child = lv_obj_get_child(obj, 0);
+    while(child) {
+      lv_anim_t a;
+      lv_anim_init(&a);
+      lv_anim_set_var(&a, child);
+      lv_anim_set_delay(&a, delay);
+      lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t) lv_obj_set_y);
+      lv_anim_set_ready_cb(&a, lv_obj_del_anim_ready_cb);
+      lv_anim_start(&a);
+    }
+      child = lv_obj_get_child_back(obj, child);
+    }
+}
+
+static void nextScreen(String userName) {
+  lv_obj_t * textLabel = lv_label_create(lv_screen_active());
+  lv_label_set_long_mode(textLabel, LV_LABEL_LONG_WRAP);    // Breaks the
+  lv_label_set_text(textLabel, userName.c_str());
+  lv_obj_set_width(textLabel, 150);    // Set smaller width to make the lines wrap
+  lv_obj_set_style_text_align(textLabel, LV_TEXT_ALIGN_CENTER, 0);
+  lv_obj_align(textLabel, LV_ALIGN_CENTER, 0, 0);
 }
 
 String currentTime() {
@@ -197,6 +239,9 @@ void setup() {
   }
 
   Serial.println("SD card initialized."); // Important to have SD card initialized before TFT_eSPI
+  if (SD.exists("/lake.jpg")) {
+    Serial.println("Image exists!");
+  }
 
   //-------------------------------------------------------------------------------------
 
