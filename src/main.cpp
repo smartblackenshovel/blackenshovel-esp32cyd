@@ -17,6 +17,7 @@
 #define HTTP_ACTIVE 0
 
 WiFiClientSecure securedClient;
+DisplayHandler displayHandler;
 
 const char* ssid = "iPhone de Lauro";
 const char* password = "lolo1234";
@@ -73,27 +74,20 @@ void setup() {
   //-------------------------------------------------------------------------------------
 
   Serial.println("Initializing LVGL Library...");
-  String LVGL_Arduino = String("LVGL Library Version: ") + lv_version_major() + "." + lv_version_minor() + "." + lv_version_patch();
+  String LVGL_Arduino = displayHandler.getLVGLVersion();
   Serial.println(LVGL_Arduino);
-  lv_init();
-  lv_log_register_print_cb(log_print);
+  
   Serial.println("LVGL initialized.");
 
   //-------------------------------------------------------------------------------------
 
-  Serial.println("Initializing touchscreen and TFT...");
+  Serial.println("Initializing Display...");
   
-  touchscreen_begin();
+  displayHandler.begin();
 
   //-------------------------------------------------------------------------------------
-
-  Serial.println("Configuring LVGL Library...");
-
-  lvgl_config();
-
-  Serial.println("LVGL configured.");
-
-  lv_create_main_gui();
+  Serial.println("Creating main GUI...");
+  displayHandler.createMainGUI();
 
   //-------------------------------------------------------------------------------------
   #if HTTP_ACTIVE
@@ -249,9 +243,7 @@ void loop() {
   delay(10000);
   #endif
 
-  lv_task_handler();
-  lv_tick_inc(5);
-  delay(5);
+  displayHandler.handle();
   // Get Coordinates of destination spot
 
   // Get Accel Data and Gyro data

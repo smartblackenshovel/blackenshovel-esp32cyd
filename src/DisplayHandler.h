@@ -6,6 +6,7 @@
 #include <lvgl.h>
 #include <Arduino.h>
 
+// Screen / Touch constants
 #define SCREEN_WIDTH 240
 #define SCREEN_HEIGHT 320
 #define DRAW_BUF_SIZE (SCREEN_WIDTH * SCREEN_HEIGHT / 10 * (LV_COLOR_DEPTH / 8))
@@ -16,26 +17,46 @@
 #define XPT2046_CLK 25
 #define XPT2046_CS 33
 
-uint32_t draw_buf[DRAW_BUF_SIZE / 4];
+#define TICK_DELAY 5
 
-extern SPIClass touchscreenSPI;
-extern XPT2046_Touchscreen touchscreen;
+class DisplayHandler {
+public:
+    DisplayHandler();         // Constructor
+    void begin();             // Initialize display, touchscreen, LVGL
+    void handle();            // Call periodically (e.g., in loop)
+    void createMainGUI();
+    String getLVGLVersion() const { return LVGLVersion; }
 
-lv_display_t * disp;
-lv_indev_t * indev = lv_indev_create();
+private:
+    static DisplayHandler* instance;
+    SPIClass touchscreenSPI;
+    XPT2046_Touchscreen touchscreen;
 
-int x, y, z;
-int btn1_count = 0;
-static lv_obj_t * slider_label;
-static lv_obj_t * user_list;
+    TFT_eSPI tft;
 
-void touchscreen_begin();
-void lvgl_config();
-static void nextScreen(String userName);
-void log_print(lv_log_level_t level, const char * buf);
-void touchscreen_read(lv_indev_t * indev, lv_indev_data_t * data);
-static void event_handler_btn1(lv_event_t * e);
-static void event_handler_btn2(lv_event_t * e);
-static void slider_event_callback(lv_event_t * e);
-static void event_handler(lv_event_t * e);
-void lv_create_main_gui(void);
+    uint32_t draw_buf[DRAW_BUF_SIZE / 4];
+
+    lv_display_t * disp;
+    lv_indev_t * indev;
+
+    lv_obj_t * usersList;
+
+    String LVGLVersion;
+
+    int x, y, z;
+
+    void touchscreenBegin();
+    void lvglInit();
+    void lvglConfig();
+    void nextScreen(String userName);
+    static void logPrint(lv_log_level_t level, const char * buf);
+
+    static void touchscreenReadStatic(lv_indev_t * indev, lv_indev_data_t * data);
+    void touchscreenRead(lv_indev_t * indev, lv_indev_data_t * data);
+
+    static void lvObjDelAnim(lv_anim_t * a);
+    static void lvAnimAllOut(lv_obj_t * obj, uint32_t delay);
+
+    static void eventHandlerStatic(lv_event_t * e);
+    void eventHandler(lv_event_t * e);
+};
