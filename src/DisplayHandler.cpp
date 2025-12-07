@@ -140,11 +140,16 @@ void DisplayHandler::lvAnimAllOut(lv_obj_t* obj, uint32_t delay) {
 }
 
 void DisplayHandler::nextScreen(String userName) {
-  lvAnimAllOut(lv_screen_active(), 0);
-  lv_obj_t* textLabel = lv_label_create(lv_screen_active());
-  lv_label_set_long_mode(textLabel, LV_LABEL_LONG_WRAP);
-  lv_label_set_text(textLabel, userName.c_str());
-  lv_obj_set_width(textLabel, 150);
-  lv_obj_set_style_text_align(textLabel, LV_TEXT_ALIGN_CENTER, 0);
-  lv_obj_align(textLabel, LV_ALIGN_CENTER, 0, 0);
+  // lvAnimAllOut(lv_screen_active(), 0);
+  // lv_obj_t* textLabel = lv_label_create(lv_screen_active());
+  // lv_label_set_long_mode(textLabel, LV_LABEL_LONG_WRAP);
+  // lv_label_set_text(textLabel, userName.c_str());
+  // lv_obj_set_width(textLabel, 150);
+  // lv_obj_set_style_text_align(textLabel, LV_TEXT_ALIGN_CENTER, 0);
+  // lv_obj_align(textLabel, LV_ALIGN_CENTER, 0, 0);
+
+  LV_IMAGE_DECLARE(rapperswil_map);
+  lv_obj_t * img1 = lv_image_create(lv_screen_active());
+  lv_image_set_src(img1, &rapperswil_map);
+  lv_obj_align(img1, LV_ALIGN_CENTER, 0, 0);
 }
