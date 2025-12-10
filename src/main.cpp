@@ -1,12 +1,15 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <SD.h>
-#include "HTTPHandler.h"
 #include <vector>
 #include <time.h>
 #include <ArduinoJson.h>
 #include "JsonUtils.h"
 #include "DisplayHandler.h"
+#include "HTTPHandler.h"
+#include "SessionManager.h"
+#include "DataAccess/SerialPortReader.h"
+#include "DataAccess/SerialPortWriter.h"
 
 #define SCREEN_WIDTH 240
 #define SCREEN_HEIGHT 320
@@ -16,8 +19,16 @@
 
 #define HTTP_ACTIVE 0
 
+#define ESP32S3_RX_PIN 35
+#define ESP32S3_TX_PIN 22
+
 WiFiClientSecure securedClient;
-DisplayHandler displayHandler;
+
+SerialPortWriter serialPortWriter(Serial1);
+SessionManager sessionManager(serialPortWriter);
+SerialPortReader serialPortReader(Serial1, sessionManager);
+
+DisplayHandler displayHandler(sessionManager);
 
 const char* ssid = "iPhone de Lauro";
 const char* password = "lolo1234";
@@ -54,8 +65,19 @@ String currentTime() {
 
 void setup() {
   Serial.begin(115200);
+  // Serial.println("Starting...");
 
-  Serial.println("Starting...");
+  Serial1.begin(9600, SERIAL_8N1, ESP32S3_RX_PIN, ESP32S3_TX_PIN);
+
+  if (!Serial) {
+    // Wait for Serial to initialize
+    delay(1000);
+  }
+
+  Serial.println("Serial initialized.");
+
+  
+
 
   //-------------------------------------------------------------------------------------
 
@@ -87,7 +109,7 @@ void setup() {
 
   //-------------------------------------------------------------------------------------
   Serial.println("Creating main GUI...");
-  displayHandler.createMainGUI();
+  displayHandler.initializeScreen();
 
   //-------------------------------------------------------------------------------------
   #if HTTP_ACTIVE
@@ -157,6 +179,21 @@ void setup() {
 }
 
 void loop() {
+  Serial.println("Reading data from S3...");
+  serialPortReader.read();
+
+  std::vector<User> fakeUsers;
+  fakeUsers.push_back(User("Alice", "1"));
+  fakeUsers.push_back(User("Bob", "2"));
+  sessionManager.setUsers(fakeUsers);
+
+  Serial.println(sessionManager.name);
+
+  Serial.println(sessionManager.getUsers()[0].getName());
+
+  Serial.println("Updating GUI...");
+  displayHandler.updateGUI();
+  
   #if HTTP_ACTIVE
   if (!selectedUser) {
 
@@ -243,30 +280,17 @@ void loop() {
   delay(10000);
   #endif
 
-  displayHandler.handle();
-  // Get Coordinates of destination spot
+  // if (Serial1.available()) {
+  //   JsonDocument imuData;
+  //   deserializeJson(imuData, Serial1);
+  //   serializeJson(imuData, Serial1);
+  //   displayHandler.test = String((const char*)imuData["msg"]);
 
-  // Get Accel Data and Gyro data
-
-  // Run ML Model
-
-  // Display Routing
-
-  // POST Session Log
-
-  // Check if arrived at spot
-
-  // Show confirmation dialog
-
-  // POST Spot Log
-
-  // Check if finished spot
-
-  // Show confirmation dialog
-  
-  // POST Spot Log
-
-  // Check for touch to end session
-
-  // End Session
+  //   JsonDocument userLoc;
+  //   deserializeJson(userLoc, Serial1);
+  //   double lat = userLoc["data"]["lat"];
+  //   double lon = userLoc["data"]["lon"];
+  // }
+  Serial.println("Refreshing GUI...");
+  displayHandler.refreshGUI();
 }

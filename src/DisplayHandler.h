@@ -25,14 +25,23 @@ class DisplayHandler {
 public:
     DisplayHandler(SessionManager& sessionManager);         // Constructor
     void begin();             // Initialize display, touchscreen, LVGL
-    void handle();            // Call periodically (e.g., in loop)
-    void createMainGUI();
+    void refreshGUI();            // Call periodically (e.g., in loop)
+    void updateGUI();
+    void initializeScreen();
     String getLVGLVersion() const { return LVGLVersion; }
-    String test = "No data";
-    
+
 
 private:
     static DisplayHandler* instance;
+
+    enum Screens {
+      INITIALIZE,
+      LOAD,
+      USER_SELECTION,
+      MAP
+    };
+
+    Screens currentScreen;
 
     SPIClass touchscreenSPI;
     XPT2046_Touchscreen touchscreen;
@@ -62,7 +71,14 @@ private:
 
     static void lvObjDelAnim(lv_anim_t * a);
     static void lvAnimAllOut(lv_obj_t * obj, uint32_t delay);
+    void cleanScreen();
 
     static void eventHandlerStatic(lv_event_t * e);
     void eventHandler(lv_event_t * e);
+
+    void showTextOnCenter(String text);
+
+    void loadScreen();
+    void userSelectionScreen();
+    void openMapScreen();
 };

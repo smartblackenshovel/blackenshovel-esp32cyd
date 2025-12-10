@@ -8,7 +8,8 @@ DisplayHandler::DisplayHandler(SessionManager& SessionManager)
       tft(),
       sessionManager(sessionManager),
       LVGLVersion(String("LVGL Library Version: ") + lv_version_major() + "." +
-                   lv_version_minor() + "." + lv_version_patch())
+                   lv_version_minor() + "." + lv_version_patch()),
+      currentScreen(INITIALIZE)
 {
   instance = this;
 }
@@ -19,10 +20,26 @@ void DisplayHandler::begin() {
   lvglConfig();
 }
 
-void DisplayHandler::handle() {
+void DisplayHandler::refreshGUI() {
   lv_task_handler();
   lv_tick_inc(TICK_DELAY);
   delay(TICK_DELAY);
+}
+
+void DisplayHandler::updateGUI() {
+  switch (currentScreen) {
+    case LOAD:
+      userSelectionScreen();
+      break;
+    case USER_SELECTION:
+      openMapScreen();
+      break;
+    case MAP:
+      // Update map screen if necessary
+      break;
+    default:
+      break;
+  }
 }
 
 void DisplayHandler::touchscreenBegin() {
@@ -95,7 +112,40 @@ void DisplayHandler::eventHandler(lv_event_t* e) {
 
 }
 
-void DisplayHandler::createMainGUI(void) {
+void DisplayHandler::showTextOnCenter(String text) {
+  lv_obj_t* textLabel = lv_label_create(lv_screen_active());
+  lv_label_set_long_mode(textLabel, LV_LABEL_LONG_WRAP);
+  lv_label_set_text(textLabel, text.c_str());
+  lv_obj_set_width(textLabel, 150);
+  lv_obj_set_style_text_align(textLabel, LV_TEXT_ALIGN_CENTER, 0);
+  lv_obj_align(textLabel, LV_ALIGN_CENTER, 0, 0);
+}
+
+void DisplayHandler::initializeScreen() {
+  loadScreen();
+}
+
+void DisplayHandler::loadScreen() {
+  showTextOnCenter(String("Loading..."));
+  currentScreen = LOAD;
+  // Check if I need to show or update something
+  // Do the changes
+  // Then set to new state
+}
+
+void DisplayHandler::userSelectionScreen() {
+  Serial.println("Displaying User Selection Screen...");
+  Serial.println(sessionManager.name);
+  Serial.println(sessionManager.getUsers()[0].getName());
+  std::vector<User> users = sessionManager.getUsers();
+  Serial.println("Preparing user list...");
+  Serial.printf("Number of users available: %d\n", users.size());
+  if (users.empty()) {
+    return;
+  }
+
+  cleanScreen();
+
   usersList = lv_list_create(lv_screen_active());
   lv_obj_set_size(usersList, SCREEN_WIDTH - 20, SCREEN_HEIGHT / 3);
   lv_obj_center(usersList);
@@ -104,20 +154,33 @@ void DisplayHandler::createMainGUI(void) {
 
   lv_list_add_text(usersList, "User Selection");
 
-  std::vector<User> users = sessionManager.getUsers();
-
+  for (const User& user : users) {
+    btn = lv_list_add_btn(usersList, LV_SYMBOL_FILE, user.getName().c_str());
+    lv_obj_add_event_cb(btn, eventHandlerStatic, LV_EVENT_ALL, NULL);
+  }
   
-  btn = lv_list_add_btn(usersList, LV_SYMBOL_FILE, "User 1");
-  lv_obj_add_event_cb(btn, eventHandlerStatic, LV_EVENT_ALL, NULL);
-  btn = lv_list_add_btn(usersList, LV_SYMBOL_FILE, "User 2");
-  lv_obj_add_event_cb(btn, eventHandlerStatic, LV_EVENT_ALL, NULL);
-  btn = lv_list_add_btn(usersList, LV_SYMBOL_FILE, "User 3");
-  lv_obj_add_event_cb(btn, eventHandlerStatic, LV_EVENT_ALL, NULL);
+  currentScreen = USER_SELECTION;
+}
+
+void DisplayHandler::openMapScreen() {
+  // Implementation for map screen
+  cleanScreen();
+
+  LV_IMAGE_DECLARE(rapperswil_map);
+  lv_obj_t * img1 = lv_image_create(lv_screen_active());
+  lv_image_set_src(img1, &rapperswil_map);
+  lv_obj_align(img1, LV_ALIGN_CENTER, 0, 0);
+
+  currentScreen = MAP;
 }
 
 void DisplayHandler::lvObjDelAnim(lv_anim_t* a) {
   lv_obj_t* obj = (lv_obj_t*)a->var;
   lv_obj_del(obj);
+}
+
+void DisplayHandler::cleanScreen() {
+  lvAnimAllOut(lv_screen_active(), 0);
 }
 
 void DisplayHandler::lvAnimAllOut(lv_obj_t* obj, uint32_t delay) {
@@ -154,8 +217,4 @@ void DisplayHandler::nextScreen(String userName) {
   // lv_obj_set_style_text_align(textLabel, LV_TEXT_ALIGN_CENTER, 0);
   // lv_obj_align(textLabel, LV_ALIGN_CENTER, 0, 0);
 
-  LV_IMAGE_DECLARE(rapperswil_map);
-  lv_obj_t * img1 = lv_image_create(lv_screen_active());
-  lv_image_set_src(img1, &rapperswil_map);
-  lv_obj_align(img1, LV_ALIGN_CENTER, 0, 0);
 }
