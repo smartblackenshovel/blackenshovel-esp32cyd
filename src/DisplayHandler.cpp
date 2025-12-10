@@ -2,10 +2,11 @@
 
 DisplayHandler* DisplayHandler::instance = nullptr;
 
-DisplayHandler::DisplayHandler()
+DisplayHandler::DisplayHandler(SessionManager& SessionManager)
     : touchscreenSPI(VSPI),
       touchscreen(XPT2046_CS, XPT2046_IRQ),
       tft(),
+      sessionManager(sessionManager),
       LVGLVersion(String("LVGL Library Version: ") + lv_version_major() + "." +
                    lv_version_minor() + "." + lv_version_patch())
 {
@@ -91,6 +92,7 @@ void DisplayHandler::eventHandler(lv_event_t* e) {
     LV_LOG_USER("List item clicked: %s", lv_list_get_btn_text(usersList, obj));
     nextScreen(String(lv_list_get_btn_text(usersList, obj)));
   }
+
 }
 
 void DisplayHandler::createMainGUI(void) {
@@ -101,6 +103,10 @@ void DisplayHandler::createMainGUI(void) {
   lv_obj_t* btn;
 
   lv_list_add_text(usersList, "User Selection");
+
+  std::vector<User> users = sessionManager.getUsers();
+
+  
   btn = lv_list_add_btn(usersList, LV_SYMBOL_FILE, "User 1");
   lv_obj_add_event_cb(btn, eventHandlerStatic, LV_EVENT_ALL, NULL);
   btn = lv_list_add_btn(usersList, LV_SYMBOL_FILE, "User 2");
@@ -140,10 +146,10 @@ void DisplayHandler::lvAnimAllOut(lv_obj_t* obj, uint32_t delay) {
 }
 
 void DisplayHandler::nextScreen(String userName) {
-  // lvAnimAllOut(lv_screen_active(), 0);
+  lvAnimAllOut(lv_screen_active(), 0);
   // lv_obj_t* textLabel = lv_label_create(lv_screen_active());
   // lv_label_set_long_mode(textLabel, LV_LABEL_LONG_WRAP);
-  // lv_label_set_text(textLabel, userName.c_str());
+  // lv_label_set_text(textLabel, test.c_str());
   // lv_obj_set_width(textLabel, 150);
   // lv_obj_set_style_text_align(textLabel, LV_TEXT_ALIGN_CENTER, 0);
   // lv_obj_align(textLabel, LV_ALIGN_CENTER, 0, 0);

@@ -5,6 +5,8 @@
 #include <XPT2046_Touchscreen.h>
 #include <lvgl.h>
 #include <Arduino.h>
+#include "User.h"
+#include "SessionManager.h"
 
 // Screen / Touch constants
 #define SCREEN_WIDTH 240
@@ -21,18 +23,22 @@
 
 class DisplayHandler {
 public:
-    DisplayHandler();         // Constructor
+    DisplayHandler(SessionManager& sessionManager);         // Constructor
     void begin();             // Initialize display, touchscreen, LVGL
     void handle();            // Call periodically (e.g., in loop)
     void createMainGUI();
     String getLVGLVersion() const { return LVGLVersion; }
+    String test = "No data";
+    
 
 private:
     static DisplayHandler* instance;
+
     SPIClass touchscreenSPI;
     XPT2046_Touchscreen touchscreen;
-
     TFT_eSPI tft;
+
+    SessionManager& sessionManager;
 
     uint32_t draw_buf[DRAW_BUF_SIZE / 4];
 
