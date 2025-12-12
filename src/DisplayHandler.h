@@ -29,7 +29,7 @@ public:
     void updateGUI();
     void initializeScreen();
     String getLVGLVersion() const { return LVGLVersion; }
-
+    SessionManager& sessionManager;
 
 private:
     static DisplayHandler* instance;
@@ -46,8 +46,6 @@ private:
     SPIClass touchscreenSPI;
     XPT2046_Touchscreen touchscreen;
     TFT_eSPI tft;
-
-    SessionManager& sessionManager;
 
     uint32_t draw_buf[DRAW_BUF_SIZE / 4];
 

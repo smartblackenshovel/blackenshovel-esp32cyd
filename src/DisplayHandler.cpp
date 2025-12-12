@@ -2,7 +2,7 @@
 
 DisplayHandler* DisplayHandler::instance = nullptr;
 
-DisplayHandler::DisplayHandler(SessionManager& SessionManager)
+DisplayHandler::DisplayHandler(SessionManager& sessionManager)
     : touchscreenSPI(VSPI),
       touchscreen(XPT2046_CS, XPT2046_IRQ),
       tft(),
@@ -107,7 +107,8 @@ void DisplayHandler::eventHandler(lv_event_t* e) {
   lv_obj_t* obj = (lv_obj_t*)lv_event_get_target(e);
   if (code == LV_EVENT_CLICKED) {
     LV_LOG_USER("List item clicked: %s", lv_list_get_btn_text(usersList, obj));
-    nextScreen(String(lv_list_get_btn_text(usersList, obj)));
+    String selectedUserName = String(lv_list_get_btn_text(usersList, obj));
+    sessionManager.selectUser(selectedUserName);
   }
 
 }
@@ -134,12 +135,7 @@ void DisplayHandler::loadScreen() {
 }
 
 void DisplayHandler::userSelectionScreen() {
-  Serial.println("Displaying User Selection Screen...");
-  Serial.println(sessionManager.name);
-  Serial.println(sessionManager.getUsers()[0].getName());
   std::vector<User> users = sessionManager.getUsers();
-  Serial.println("Preparing user list...");
-  Serial.printf("Number of users available: %d\n", users.size());
   if (users.empty()) {
     return;
   }
@@ -163,7 +159,10 @@ void DisplayHandler::userSelectionScreen() {
 }
 
 void DisplayHandler::openMapScreen() {
-  // Implementation for map screen
+  if (!sessionManager.getSessionUser()) {
+    Serial.println("No user selected. Cannot open map screen.");
+    return;
+  }
   cleanScreen();
 
   LV_IMAGE_DECLARE(rapperswil_map);
@@ -180,7 +179,7 @@ void DisplayHandler::lvObjDelAnim(lv_anim_t* a) {
 }
 
 void DisplayHandler::cleanScreen() {
-  lvAnimAllOut(lv_screen_active(), 0);
+  lvAnimAllOut(lv_screen_active(), 100);
 }
 
 void DisplayHandler::lvAnimAllOut(lv_obj_t* obj, uint32_t delay) {
@@ -206,15 +205,4 @@ void DisplayHandler::lvAnimAllOut(lv_obj_t* obj, uint32_t delay) {
 
     lv_anim_start(&a);
   }
-}
-
-void DisplayHandler::nextScreen(String userName) {
-  lvAnimAllOut(lv_screen_active(), 0);
-  // lv_obj_t* textLabel = lv_label_create(lv_screen_active());
-  // lv_label_set_long_mode(textLabel, LV_LABEL_LONG_WRAP);
-  // lv_label_set_text(textLabel, test.c_str());
-  // lv_obj_set_width(textLabel, 150);
-  // lv_obj_set_style_text_align(textLabel, LV_TEXT_ALIGN_CENTER, 0);
-  // lv_obj_align(textLabel, LV_ALIGN_CENTER, 0, 0);
-
 }
