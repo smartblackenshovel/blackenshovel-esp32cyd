@@ -26,9 +26,11 @@ WiFiClientSecure securedClient;
 
 SerialPortWriter serialPortWriter(Serial1);
 SessionManager sessionManager(serialPortWriter);
+DisplayHandler displayHandler(sessionManager);
+
 SerialPortReader serialPortReader(Serial1, sessionManager);
 
-DisplayHandler displayHandler(sessionManager);
+
 
 const char* ssid = "iPhone de Lauro";
 const char* password = "lolo1234";
@@ -179,19 +181,7 @@ void setup() {
 }
 
 void loop() {
-  Serial.println("Reading data from S3...");
   serialPortReader.read();
-
-  std::vector<User> fakeUsers;
-  fakeUsers.push_back(User("Alice", "1"));
-  fakeUsers.push_back(User("Bob", "2"));
-  sessionManager.setUsers(fakeUsers);
-
-  Serial.println(sessionManager.name);
-
-  Serial.println(sessionManager.getUsers()[0].getName());
-
-  Serial.println("Updating GUI...");
   displayHandler.updateGUI();
   
   #if HTTP_ACTIVE
@@ -280,17 +270,5 @@ void loop() {
   delay(10000);
   #endif
 
-  // if (Serial1.available()) {
-  //   JsonDocument imuData;
-  //   deserializeJson(imuData, Serial1);
-  //   serializeJson(imuData, Serial1);
-  //   displayHandler.test = String((const char*)imuData["msg"]);
-
-  //   JsonDocument userLoc;
-  //   deserializeJson(userLoc, Serial1);
-  //   double lat = userLoc["data"]["lat"];
-  //   double lon = userLoc["data"]["lon"];
-  // }
-  Serial.println("Refreshing GUI...");
   displayHandler.refreshGUI();
 }
