@@ -3,7 +3,7 @@
 
 std::vector<User> parseUsers(JsonDocument& doc) {
     std::vector<User> users;
-    JsonArray arr = doc.as<JsonArray>();
+    JsonArray arr = doc["data"].as<JsonArray>();
     for (JsonObject obj : arr) {
         String name = obj["name"].as<String>();
         String id = obj["id"].as<String>();
@@ -17,8 +17,14 @@ void SerialPortReader::read() {
         return;
     }
     JsonDocument doc;
-    deserializeJson(doc, serialPort);
+    DeserializationError error = deserializeJson(doc, serialPort);
+    if (error) {
+        Serial.print("Failed to parse JSON from Serial Port: ");
+        Serial.println(error.c_str());
+        return;
+    }
     String msgType = doc["msgType"].as<String>();
+    msgType.trim();
     if (msgType == "users") {
         sessionUpdater.setUsers(parseUsers(doc));
         return;
