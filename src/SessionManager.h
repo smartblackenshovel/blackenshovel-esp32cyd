@@ -12,7 +12,7 @@ class SessionManager : public ISessionUpdater {
         void setUsers(std::vector<User> newUsers) override;
         std::vector<User> getUsers() const { return users; }
         void selectUser(String name);
-        String name = "Lauro";
+        User* getSessionUser() const { return selectedUser; }
     private:
         std::vector<User> users;
         User* selectedUser = nullptr;

@@ -4,6 +4,7 @@ SessionManager::SessionManager(SerialPortWriter& serialPortWriter)
     : serialPortWriter(serialPortWriter) {}
 
 void SessionManager::setUsers(std::vector<User> newUsers) {
+    if (!users.empty()) {return;}
     users = newUsers;
 }
 
