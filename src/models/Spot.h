@@ -16,4 +16,5 @@ class Spot {
         }
         Location getLocation() { return loc; }
         void complete() { isCompleted = true; }
+        bool isComplete() { return isCompleted; }
 };

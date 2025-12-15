@@ -42,7 +42,11 @@ void SerialPortReader::read() {
             doc["data"]["lat"],
             doc["data"]["lon"]
         );
-    } else if (msgType == "spotLoc") {
-        // TO DO
+    } else if (msgType == "spot") {
+        sessionUpdater.setSpot(
+            doc["data"]["id"],
+            doc["data"]["lat"],
+            doc["data"]["lon"]
+        );
     }
 }

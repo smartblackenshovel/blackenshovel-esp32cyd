@@ -25,3 +25,9 @@ void SessionManager::setUserImu(double ax, double ay, double az, double gx, doub
 void SessionManager::setUserLoc(double lat, double lon) {
     selectedUser->setLocation(lat, lon);
 }
+
+void SessionManager::setSpot(String id, double lat, double lon) {
+    if (!nextSpot->isComplete()) { return; }
+    if (nextSpot != nullptr) { delete nextSpot; }
+    nextSpot = new Spot(id, lat, lon);
+}

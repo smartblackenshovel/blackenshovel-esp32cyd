@@ -9,4 +9,5 @@ class ISessionUpdater {
         virtual void setUsers(std::vector<User> users) = 0;
         virtual void setUserImu(double ax, double ay, double az, double gx, double gy, double gz) = 0;
         virtual void setUserLoc(double lat, double lon);
+        virtual void setSpot(String id, double lat, double lon);
 };
