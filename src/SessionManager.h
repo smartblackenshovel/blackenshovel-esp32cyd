@@ -1,9 +1,9 @@
 #pragma once
 #include <Arduino.h>
 #include <vector>
-#include "DataAccess/SerialPortWriter.h"
+#include "dataAccess/SerialPortWriter.h"
 #include "ISessionUpdater.h"
-#include "User.h"
+#include "models/User.h"
 
 class SessionManager : public ISessionUpdater {
 

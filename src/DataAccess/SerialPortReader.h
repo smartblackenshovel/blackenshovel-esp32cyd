@@ -1,6 +1,6 @@
 #pragma once
 #include <Arduino.h>
-#include "../ISessionUpdater.h"
+#include "ISessionUpdater.h"
 
 class SerialPortReader {
     public:

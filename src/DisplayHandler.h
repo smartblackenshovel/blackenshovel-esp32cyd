@@ -5,7 +5,7 @@
 #include <XPT2046_Touchscreen.h>
 #include <lvgl.h>
 #include <Arduino.h>
-#include "User.h"
+#include "models/User.h"
 #include "SessionManager.h"
 
 // Screen / Touch constants

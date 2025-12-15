@@ -1,4 +1,4 @@
-#include "../JsonUtils.h"
+#include "utils/JsonUtils.h"
 #include "SerialPortReader.h"
 
 std::vector<User> parseUsers(JsonDocument& doc) {
@@ -28,5 +28,11 @@ void SerialPortReader::read() {
     if (msgType == "users") {
         sessionUpdater.setUsers(parseUsers(doc));
         return;
+    } else if (msgType == "imu") {
+        // TO DO
+    } else if (msgType == "userLoc") {
+        // TO DO
+    } else if (msgType == "spotLoc") {
+        // TO DO 
     }
 }

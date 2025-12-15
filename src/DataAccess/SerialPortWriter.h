@@ -1,6 +1,6 @@
 #pragma once
 #include <Arduino.h>
-#include "../User.h"
+#include "models/User.h"
 
 class SerialPortWriter {
     public:
