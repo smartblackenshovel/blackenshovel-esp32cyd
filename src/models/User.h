@@ -1,6 +1,7 @@
 #pragma once
 #include <Arduino.h>
 #include "Location.h"
+#include "models/IMU.h"
 
 class User {
     private:
@@ -9,10 +10,11 @@ class User {
         Location loc;
     public:
         User(const String& userName, const String& userId)
-            : name(userName), id(userId), loc(0, 0) {}
+            : name(userName), id(userId), loc(0, 0), imu() {}
         String getName() const { return name; }
         String getId() const { return id; }
         void setLocation(double latitude, double longitude) {
             loc = Location(latitude, longitude);
         }
+        IMU imu;
 };

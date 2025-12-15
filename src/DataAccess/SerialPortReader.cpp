@@ -29,10 +29,17 @@ void SerialPortReader::read() {
         sessionUpdater.setUsers(parseUsers(doc));
         return;
     } else if (msgType == "imu") {
-        // TO DO
+        sessionUpdater.setUserImu(
+            doc["data"]["accel"]["x"],
+            doc["data"]["accel"]["y"],
+            doc["data"]["accel"]["z"],
+            doc["data"]["gyro"]["z"],
+            doc["data"]["gyro"]["z"],
+            doc["data"]["gyro"]["z"]
+        );
     } else if (msgType == "userLoc") {
         // TO DO
     } else if (msgType == "spotLoc") {
-        // TO DO 
+        // TO DO
     }
 }

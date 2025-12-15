@@ -4,12 +4,14 @@
 #include "dataAccess/SerialPortWriter.h"
 #include "ISessionUpdater.h"
 #include "models/User.h"
+#include "models/IMU.h"
 
 class SessionManager : public ISessionUpdater {
 
     public:
         SessionManager(SerialPortWriter& serialPortWriter);
         void setUsers(std::vector<User> newUsers) override;
+        void setUserImu(double ax, double ay, double az, double gx, double gy, double gz) override;
         std::vector<User> getUsers() const { return users; }
         void selectUser(String name);
         User* getSessionUser() const { return selectedUser; }
