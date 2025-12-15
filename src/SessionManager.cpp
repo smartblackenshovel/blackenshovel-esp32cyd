@@ -21,3 +21,7 @@ void SessionManager::setUserImu(double ax, double ay, double az, double gx, doub
     selectedUser->imu.setAccelerometer(ax, ay, az);
     selectedUser->imu.setGyroscope(gx, gy, gz);
 }
+
+void SessionManager::setUserLoc(double lat, double lon) {
+    selectedUser->setLocation(lat, lon);
+}

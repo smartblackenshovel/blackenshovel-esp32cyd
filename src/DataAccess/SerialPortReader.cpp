@@ -38,7 +38,10 @@ void SerialPortReader::read() {
             doc["data"]["gyro"]["z"]
         );
     } else if (msgType == "userLoc") {
-        // TO DO
+        sessionUpdater.setUserLoc(
+            doc["data"]["lat"],
+            doc["data"]["lon"]
+        );
     } else if (msgType == "spotLoc") {
         // TO DO
     }

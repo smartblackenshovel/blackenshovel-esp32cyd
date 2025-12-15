@@ -12,6 +12,7 @@ class SessionManager : public ISessionUpdater {
         SessionManager(SerialPortWriter& serialPortWriter);
         void setUsers(std::vector<User> newUsers) override;
         void setUserImu(double ax, double ay, double az, double gx, double gy, double gz) override;
+        void setUserLoc(double lat, double lon) override;
         std::vector<User> getUsers() const { return users; }
         void selectUser(String name);
         User* getSessionUser() const { return selectedUser; }
