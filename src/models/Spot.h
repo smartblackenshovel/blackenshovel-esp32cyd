@@ -8,11 +8,11 @@ class Spot {
         Location loc;
         bool isCompleted;
     public:
-        Spot(const String& spotId, double lat, double lon)
-            : id(spotId), loc(lat, lon), isCompleted(false) {}
+        Spot(const String& spotId, double lat, double lon, double x, double y)
+            : id(spotId), loc(lat, lon, x, y), isCompleted(false) {}
         String getId() const { return id; }
-        void setLocation(double latitude, double longitude) {
-            loc = Location(latitude, longitude);
+        void setLocation(double latitude, double longitude, double x, double y) {
+            loc = Location(latitude, longitude, x, y);
         }
         Location getLocation() { return loc; }
         void complete() { isCompleted = true; }

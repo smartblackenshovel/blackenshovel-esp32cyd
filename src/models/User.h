@@ -10,11 +10,12 @@ class User {
         Location loc;
     public:
         User(const String& userName, const String& userId)
-            : name(userName), id(userId), loc(0, 0), imu() {}
+            : name(userName), id(userId), loc(0, 0, 0, 0), imu() {}
         String getName() const { return name; }
         String getId() const { return id; }
-        void setLocation(double latitude, double longitude) {
-            loc = Location(latitude, longitude);
+        void setLocation(double latitude, double longitude, double x, double y) {
+            loc = Location(latitude, longitude, x, y);
         }
         IMU imu;
+        Location getLocation() const { return loc; }
 };

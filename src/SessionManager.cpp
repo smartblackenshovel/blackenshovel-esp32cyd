@@ -22,12 +22,17 @@ void SessionManager::setUserImu(double ax, double ay, double az, double gx, doub
     selectedUser->imu.setGyroscope(gx, gy, gz);
 }
 
-void SessionManager::setUserLoc(double lat, double lon) {
-    selectedUser->setLocation(lat, lon);
+void SessionManager::setUserLoc(double lat, double lon, double x, double y) {
+    selectedUser->setLocation(lat, lon, x, y);
 }
 
-void SessionManager::setSpot(String id, double lat, double lon) {
-    if (!nextSpot->isComplete()) { return; }
-    if (nextSpot != nullptr) { delete nextSpot; }
-    nextSpot = new Spot(id, lat, lon);
+void SessionManager::setNextSpot(String id, double lat, double lon, double x, double y) {
+    if (nextSpot != nullptr) {
+        if (!nextSpot->isComplete()) {
+            return;
+        }
+        delete nextSpot;
+    }
+    nextSpot = new Spot(id, lat, lon, x, y);
 }
+

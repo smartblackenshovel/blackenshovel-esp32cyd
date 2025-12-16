@@ -75,8 +75,11 @@ private:
     void eventHandler(lv_event_t * e);
 
     void showTextOnCenter(String text);
+    void drawSpot(int32_t x, int32_t y);
+    void drawUserLoc(int32_t x, int32_t y);
 
     void loadScreen();
     void userSelectionScreen();
     void openMapScreen();
+    void updateMapScreen();
 };

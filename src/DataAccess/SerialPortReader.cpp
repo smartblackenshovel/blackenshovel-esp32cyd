@@ -19,8 +19,8 @@ void SerialPortReader::read() {
     JsonDocument doc;
     DeserializationError error = deserializeJson(doc, serialPort);
     if (error) {
-        Serial.print("Failed to parse JSON from Serial Port: ");
-        Serial.println(error.c_str());
+        // Serial.print("Failed to parse JSON from Serial Port: ");
+        // Serial.println(error.c_str());
         return;
     }
     String msgType = doc["msgType"].as<String>();
@@ -37,16 +37,23 @@ void SerialPortReader::read() {
             doc["data"]["gyro"]["z"],
             doc["data"]["gyro"]["z"]
         );
+        return;
     } else if (msgType == "userLoc") {
         sessionUpdater.setUserLoc(
             doc["data"]["lat"],
-            doc["data"]["lon"]
+            doc["data"]["lon"],
+            doc["data"]["x"],
+            doc["data"]["y"]
         );
+        return;
     } else if (msgType == "spot") {
-        sessionUpdater.setSpot(
+        sessionUpdater.setNextSpot(
             doc["data"]["id"],
             doc["data"]["lat"],
-            doc["data"]["lon"]
+            doc["data"]["lon"],
+            doc["data"]["x"],
+            doc["data"]["y"]
         );
+        return;
     }
 }

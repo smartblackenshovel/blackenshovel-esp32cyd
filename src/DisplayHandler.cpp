@@ -35,7 +35,7 @@ void DisplayHandler::updateGUI() {
       openMapScreen();
       break;
     case MAP:
-      // Update map screen if necessary
+      updateMapScreen();
       break;
     default:
       break;
@@ -160,9 +160,9 @@ void DisplayHandler::userSelectionScreen() {
 
 void DisplayHandler::openMapScreen() {
   if (!sessionManager.getSessionUser()) {
-    Serial.println("No user selected. Cannot open map screen.");
     return;
   }
+
   cleanScreen();
 
   LV_IMAGE_DECLARE(rapperswil_map);
@@ -171,6 +171,55 @@ void DisplayHandler::openMapScreen() {
   lv_obj_align(img1, LV_ALIGN_CENTER, 0, 0);
 
   currentScreen = MAP;
+}
+
+void DisplayHandler::updateMapScreen() {
+  if (!sessionManager.getNextSpot()) { 
+    return; 
+  }
+
+  // TO DO DRAW SPOT
+  drawSpot(sessionManager.getNextSpot()->getLocation().getX(), sessionManager.getNextSpot()->getLocation().getY());
+
+
+  // TO DO DRAW USER LOC
+  drawUserLoc(sessionManager.getSessionUser()->getLocation().getX(), sessionManager.getSessionUser()->getLocation().getY());
+}
+
+void DisplayHandler::drawSpot(int32_t x, int32_t y) {
+  LV_IMAGE_DECLARE(placeholder);
+  lv_obj_t * img1 = lv_image_create(lv_screen_active());
+  lv_image_set_src(img1, &placeholder);
+  lv_obj_align(img1, LV_ALIGN_CENTER, 0, 0);
+}
+
+void DisplayHandler::drawUserLoc(int32_t x, int32_t y) {
+  lv_obj_t * loc = lv_obj_create(lv_scr_act());
+  lv_obj_set_size(loc, 14, 14);
+  lv_obj_set_pos(loc, x, y);
+
+  lv_obj_set_style_bg_opa(loc, LV_OPA_TRANSP, 0);
+  lv_obj_set_style_border_width(loc, 0, 0);
+
+  lv_obj_t * accuracy = lv_obj_create(loc);
+  lv_obj_set_size(accuracy, 14, 14);
+  lv_obj_center(accuracy);
+
+  lv_obj_set_style_radius(accuracy, LV_RADIUS_CIRCLE, 0);
+  lv_obj_set_style_bg_color(accuracy, lv_color_hex(0x0000FF), 0);
+  lv_obj_set_style_bg_opa(accuracy, LV_OPA_20, 0);
+  lv_obj_set_style_border_width(accuracy, 0, 0);
+
+  lv_obj_t * dot = lv_obj_create(loc);
+  lv_obj_set_size(dot, 1, 1);
+  lv_obj_center(dot);
+
+  lv_obj_set_style_radius(dot, LV_RADIUS_CIRCLE, 0);
+  lv_obj_set_style_bg_color(dot, lv_color_hex(0x0000FF), 0);
+  lv_obj_set_style_bg_opa(dot, LV_OPA_COVER, 0);
+
+  lv_obj_set_style_border_width(dot, 3, 0);
+  lv_obj_set_style_border_color(dot, lv_color_hex(0xFFFFFF), 0);
 }
 
 void DisplayHandler::lvObjDelAnim(lv_anim_t* a) {
