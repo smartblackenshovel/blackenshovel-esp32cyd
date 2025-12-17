@@ -179,29 +179,56 @@ void DisplayHandler::updateMapScreen() {
   }
 
   // TO DO DRAW SPOT
-  drawSpot(sessionManager.getNextSpot()->getLocation().getX(), sessionManager.getNextSpot()->getLocation().getY());
+  if (spotPlaceholder == nullptr) {
+    Serial.println("drawing spot");
+    drawSpot(sessionManager.getNextSpot()->getLocation().getX(), sessionManager.getNextSpot()->getLocation().getY());
+  } else {
+    lv_obj_set_pos(spotPlaceholder, sessionManager.getNextSpot()->getLocation().getX(), sessionManager.getNextSpot()->getLocation().getY());
+  }
 
 
   // TO DO DRAW USER LOC
-  drawUserLoc(sessionManager.getSessionUser()->getLocation().getX(), sessionManager.getSessionUser()->getLocation().getY());
+  if (userLoc == nullptr) {
+    Serial.println("drawing user");
+    drawUserLoc(sessionManager.getSessionUser()->getLocation().getX(), sessionManager.getSessionUser()->getLocation().getY());
+  }
 }
 
 void DisplayHandler::drawSpot(int32_t x, int32_t y) {
-  LV_IMAGE_DECLARE(placeholder);
-  lv_obj_t * img1 = lv_image_create(lv_screen_active());
-  lv_image_set_src(img1, &placeholder);
-  lv_obj_align(img1, LV_ALIGN_CENTER, 0, 0);
+  // LV_IMAGE_DECLARE(placeholder);
+  // spotPlaceholder = lv_image_create(lv_screen_active());
+  // lv_image_set_src(spotPlaceholder, &placeholder);
+  // lv_obj_align(spotPlaceholder, LV_ALIGN_CENTER, 0, 0);
+  // lv_obj_set_style_bg_opa(spotPlaceholder, LV_OPA_TRANSP, 0);
+    // Create an object for the pin
+    spotPlaceholder = lv_obj_create(lv_scr_act());
+    lv_obj_set_size(spotPlaceholder, 14, 14);
+    lv_obj_clear_flag(spotPlaceholder, LV_OBJ_FLAG_SCROLLABLE);  // Not scrollable
+    lv_obj_set_style_bg_color(spotPlaceholder, LV_COLOR_MAKE(255, 0, 0), 0);
+    lv_obj_set_style_radius(spotPlaceholder, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_border_width(spotPlaceholder, 0, 0);
+
+    // Position the spotPlaceholder so bottom center is at (x, y)
+    lv_obj_set_pos(spotPlaceholder, x - 7, y - 14);
+
+    // Optional: add small white center circle
+    lv_obj_t* inner = lv_obj_create(spotPlaceholder);
+    lv_obj_set_size(inner, 4, 4);
+    lv_obj_center(inner);
+    lv_obj_set_style_bg_color(inner, lv_color_white(), 0);
+    lv_obj_set_style_radius(inner, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_border_width(inner, 0, 0);
 }
 
 void DisplayHandler::drawUserLoc(int32_t x, int32_t y) {
-  lv_obj_t * loc = lv_obj_create(lv_scr_act());
-  lv_obj_set_size(loc, 14, 14);
-  lv_obj_set_pos(loc, x, y);
+  userLoc = lv_obj_create(lv_scr_act());
+  lv_obj_set_size(userLoc, 14, 14);
+  lv_obj_set_pos(userLoc, x, y);
 
-  lv_obj_set_style_bg_opa(loc, LV_OPA_TRANSP, 0);
-  lv_obj_set_style_border_width(loc, 0, 0);
+  lv_obj_set_style_bg_opa(userLoc, LV_OPA_TRANSP, 0);
+  lv_obj_set_style_border_width(userLoc, 0, 0);
 
-  lv_obj_t * accuracy = lv_obj_create(loc);
+  accuracy = lv_obj_create(userLoc);
   lv_obj_set_size(accuracy, 14, 14);
   lv_obj_center(accuracy);
 
@@ -210,7 +237,7 @@ void DisplayHandler::drawUserLoc(int32_t x, int32_t y) {
   lv_obj_set_style_bg_opa(accuracy, LV_OPA_20, 0);
   lv_obj_set_style_border_width(accuracy, 0, 0);
 
-  lv_obj_t * dot = lv_obj_create(loc);
+  dot = lv_obj_create(userLoc);
   lv_obj_set_size(dot, 1, 1);
   lv_obj_center(dot);
 

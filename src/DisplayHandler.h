@@ -54,6 +54,11 @@ private:
 
     lv_obj_t * usersList;
 
+    lv_obj_t * spotPlaceholder = nullptr;
+    lv_obj_t * userLoc = nullptr;
+    lv_obj_t * accuracy;
+    lv_obj_t * dot;
+
     String LVGLVersion;
 
     int x, y, z;
