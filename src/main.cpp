@@ -1,25 +1,12 @@
-#include <SPI.h>
-#include <TFT_eSPI.h>
-#include <XPT2046_Touchscreen.h>
 #include <WiFi.h>
-#include <WiFiClientSecure.h>
 #include <HTTPClient.h>
-#include <PNGdec.h>
-#include <TFT_eFEX.h>
 #include <SD.h>
-#include "DisplayHandler.h"
 #include "HTTPHandler.h"
 #include <vector>
 #include <time.h>
 #include <ArduinoJson.h>
 #include "JsonUtils.h"
-
-
-#define XPT2046_IRQ 36
-#define XPT2046_MOSI 32
-#define XPT2046_MISO 39
-#define XPT2046_CLK 25
-#define XPT2046_CS 33
+#include "DisplayHandler.h"
 
 #define SCREEN_WIDTH 240
 #define SCREEN_HEIGHT 320
@@ -27,17 +14,10 @@
 
 #define SD_CS 4
 
-TFT_eSPI tft = TFT_eSPI();
-
-PNG png;
+#define HTTP_ACTIVE 0
 
 WiFiClientSecure securedClient;
-FileFetcher fileFetcher(securedClient);
-
-SPIClass touchscreenSPI = SPIClass(VSPI);
-XPT2046_Touchscreen touchscreen(XPT2046_CS, XPT2046_IRQ);
-
-int x, y, z;
+DisplayHandler displayHandler;
 
 const char* ssid = "iPhone de Lauro";
 const char* password = "lolo1234";
@@ -54,7 +34,7 @@ char endpointSessions[] = "/sessions";
 char endpointSpotLogs[] = "/spot_logs";
 char endpointSessionLogs[] = "/session_logs";
 char mapEndpoint[] = "/map?lat=47.2229&lon=8.8169";
-char imageFileUri[] = IMAGE_NAME;
+
 String shovelSerialNumber = "BS-#13823429-02";
 String shovelId;
 String sessionId;
@@ -62,19 +42,6 @@ String sessionId;
 HTTPHandler httpHandler(url);
 
 bool selectedUser = false;
-
-void drawMenu(const std::vector<String>& items, int itemHeight = 40, uint16_t bgColor = TFT_DARKGREY, uint16_t textColor = TFT_WHITE, uint16_t borderColor = TFT_WHITE) {
-    tft.fillScreen(TFT_BLACK);
-    int size = items.size();
-    for (int i = 0; i < size; i++) {
-        int y = i * itemHeight;
-        tft.fillRect(0, y, tft.width(), itemHeight - 2, bgColor);
-        tft.drawRect(0, y, tft.width(), itemHeight - 2, borderColor);
-        tft.setTextDatum(MC_DATUM);
-        tft.setTextColor(textColor);
-        tft.drawString(items[i], tft.width()/2, y + itemHeight/2);
-    }
-}
 
 String currentTime() {
   time_t now = time(NULL);
@@ -88,22 +55,42 @@ String currentTime() {
 void setup() {
   Serial.begin(115200);
 
-  delay(1000);
-
   Serial.println("Starting...");
 
   //-------------------------------------------------------------------------------------
 
-  Serial.println("Initializing touchscreen and TFT...");
+  Serial.println("Initializing SD card...");
 
-  touchscreenSPI.begin(XPT2046_CLK, XPT2046_MISO, XPT2046_MOSI, XPT2046_CS);
-  touchscreen.begin(touchscreenSPI);
-  touchscreen.setRotation(1);
-  tft.init();
-  tft.setRotation(1);
+  if (!SD.begin()) {
+    Serial.println("SD card failed");
+    return;
+  }
+
+  Serial.println("SD card initialized."); // Important to have SD card initialized before TFT_eSPI
+  if (SD.exists("/lake.jpg")) {
+    Serial.println("Image exists!");
+  }
 
   //-------------------------------------------------------------------------------------
 
+  Serial.println("Initializing LVGL Library...");
+  String LVGL_Arduino = displayHandler.getLVGLVersion();
+  Serial.println(LVGL_Arduino);
+  
+  Serial.println("LVGL initialized.");
+
+  //-------------------------------------------------------------------------------------
+
+  Serial.println("Initializing Display...");
+  
+  displayHandler.begin();
+
+  //-------------------------------------------------------------------------------------
+  Serial.println("Creating main GUI...");
+  displayHandler.createMainGUI();
+
+  //-------------------------------------------------------------------------------------
+  #if HTTP_ACTIVE
   Serial.println("Connecting to WiFi...");
 
   WiFi.begin(ssid, password);
@@ -117,7 +104,7 @@ void setup() {
   Serial.println(WiFi.localIP());
 
   securedClient.setInsecure();
-
+  
   //-------------------------------------------------------------------------------------
 
   Serial.println("Syncing time...");
@@ -129,20 +116,10 @@ void setup() {
     Serial.print(".");
   }
   Serial.println("Time initialized.");
-
+  #endif
   //-------------------------------------------------------------------------------------
-
-  Serial.println("Initializing SD card...");
-
-  if (!SD.begin()) {
-    Serial.println("SD card failed");
-    return;
-  }
-
-  Serial.println("SD card initialized.");
-
-  //-------------------------------------------------------------------------------------
-
+  
+  #if HTTP_ACTIVE
   Serial.println("Fetching Shovel...");
   HTTPResponse shovelsResponse = httpHandler.get(endpointShovels, {
     {"serial_number", shovelSerialNumber}
@@ -176,10 +153,11 @@ void setup() {
     Serial.printf("Failed to fetch organization. Status code: %d\n", organizationsResponse.getStatusCode());
     return;
   }
+  #endif
 }
 
 void loop() {
-
+  #if HTTP_ACTIVE
   if (!selectedUser) {
 
   // SELECT USER -------------------------------------------------------------------------
@@ -263,8 +241,9 @@ void loop() {
   }
 
   delay(10000);
-  return;
+  #endif
 
+  displayHandler.handle();
   // Get Coordinates of destination spot
 
   // Get Accel Data and Gyro data
