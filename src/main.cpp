@@ -16,8 +16,6 @@
 
 #define SD_CS 4
 
-#define HTTP_ACTIVE 0
-
 #define ESP32S3_RX_PIN 35
 #define ESP32S3_TX_PIN 22
 
