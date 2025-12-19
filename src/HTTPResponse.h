@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <ArduinoJson.h>
 
 class HTTPResponse {
 public:
@@ -12,6 +13,12 @@ public:
     bool isValid() const { return statusCode > 0; }
 
     const String& getContent() const { return content; }
+
+    JsonDocument getContentAsJson() const {
+        JsonDocument doc;
+        deserializeJson(doc, content);
+        return doc;
+    }
 
     bool hasContent() const { return content.length() > 0; }
 

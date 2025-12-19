@@ -43,9 +43,16 @@ String HTTPHandler::buildQueryParams(const String& endpoint,
   return query;
 }
 
+String mapToJsonString(const JsonDocument& json) {
+  char buffer[1024];
+  serializeJson(json, buffer);
+  return String(buffer);
+}
+
 HTTPResponse HTTPHandler::request(Method method, const String& endpoint,
                             const String& payload, const String& contentType) {
   String url = buildUrl(endpoint);
+  Serial.println("Request URL: " + url);
   httpClient.begin(url);
 
   int code = -1;
@@ -82,9 +89,9 @@ HTTPResponse HTTPHandler::request(Method method, const String& endpoint,
   return httpResponse;
 }
 
-HTTPResponse HTTPHandler::post(const String& endpoint, const String& payload,
+HTTPResponse HTTPHandler::post(const String& endpoint, const JsonDocument& payload,
                          const String& contentType) {
-  return request(Method::POST, endpoint, payload, contentType);
+  return request(Method::POST, endpoint, mapToJsonString(payload), contentType);
 }
 
 HTTPResponse HTTPHandler::get(const String& endpoint,
@@ -93,9 +100,9 @@ HTTPResponse HTTPHandler::get(const String& endpoint,
   return request(Method::GET, fullEndpoint);
 }
 
-HTTPResponse HTTPHandler::patch(const String& endpoint, const String& payload,
+HTTPResponse HTTPHandler::patch(const String& endpoint, const JsonDocument& payload,
                           const String& contentType) {
-  return request(Method::PATCH, endpoint, payload, contentType);
+  return request(Method::PATCH, endpoint, mapToJsonString(payload), contentType);
 }
 
 HTTPResponse HTTPHandler::del(const String& endpoint) {
