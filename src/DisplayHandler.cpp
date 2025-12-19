@@ -32,6 +32,11 @@ void DisplayHandler::updateGUI() {
       userSelectionScreen();
       break;
     case USER_SELECTION:
+      break;
+    case USER_SELECTED:
+      loadScreen(currentScreen);
+      break;
+    case LOAD_MAP:
       openMapScreen();
       break;
     case MAP:
@@ -109,6 +114,7 @@ void DisplayHandler::eventHandler(lv_event_t* e) {
     LV_LOG_USER("List item clicked: %s", lv_list_get_btn_text(usersList, obj));
     String selectedUserName = String(lv_list_get_btn_text(usersList, obj));
     sessionManager.selectUser(selectedUserName);
+    currentScreen = USER_SELECTED;
   }
 
 }
@@ -123,15 +129,19 @@ void DisplayHandler::showTextOnCenter(String text) {
 }
 
 void DisplayHandler::initializeScreen() {
-  loadScreen();
+  loadScreen(INITIALIZE);
 }
 
-void DisplayHandler::loadScreen() {
-  showTextOnCenter(String("Loading..."));
-  currentScreen = LOAD;
-  // Check if I need to show or update something
-  // Do the changes
-  // Then set to new state
+void DisplayHandler::loadScreen(Screens screen) {
+  if (screen == INITIALIZE) {
+    cleanScreen();
+    showTextOnCenter(String("Loading users for your organization..."));
+    currentScreen = LOAD;
+  } else if (screen == USER_SELECTED) {
+    cleanScreen();
+    showTextOnCenter(String("Loading map and calculating current location and next nearest spot..."));
+    currentScreen = LOAD_MAP;
+  }
 }
 
 void DisplayHandler::userSelectionScreen() {
@@ -159,7 +169,7 @@ void DisplayHandler::userSelectionScreen() {
 }
 
 void DisplayHandler::openMapScreen() {
-  if (!sessionManager.getSessionUser()) {
+  if (!sessionManager.getSessionUser() || !sessionManager.getNextSpot() || sessionManager.getSessionUser()->getLocation().getLatitude() == 0.0) {
     return;
   }
 
@@ -170,37 +180,20 @@ void DisplayHandler::openMapScreen() {
   lv_image_set_src(img1, &rapperswil_map);
   lv_obj_align(img1, LV_ALIGN_CENTER, 0, 0);
 
+  drawSpot(sessionManager.getNextSpot()->getLocation().getX(), sessionManager.getNextSpot()->getLocation().getY());
+  drawUserLoc(sessionManager.getSessionUser()->getLocation().getX(), sessionManager.getSessionUser()->getLocation().getY());
+  drawShovelIcon();
+
   currentScreen = MAP;
 }
 
 void DisplayHandler::updateMapScreen() {
-  if (!sessionManager.getNextSpot()) { 
-    return; 
-  }
-
-  // TO DO DRAW SPOT
-  if (spotPlaceholder == nullptr) {
-    Serial.println("drawing spot");
-    drawSpot(sessionManager.getNextSpot()->getLocation().getX(), sessionManager.getNextSpot()->getLocation().getY());
-  } else {
-    lv_obj_set_pos(spotPlaceholder, sessionManager.getNextSpot()->getLocation().getX(), sessionManager.getNextSpot()->getLocation().getY());
-  }
-
-
-  // TO DO DRAW USER LOC
-  if (userLoc == nullptr) {
-    Serial.println("drawing user");
-    drawUserLoc(sessionManager.getSessionUser()->getLocation().getX(), sessionManager.getSessionUser()->getLocation().getY());
-  }
+  lv_obj_set_pos(spotPlaceholder, sessionManager.getNextSpot()->getLocation().getX(), sessionManager.getNextSpot()->getLocation().getY());
+  lv_obj_set_pos(userLoc, sessionManager.getSessionUser()->getLocation().getX(), sessionManager.getSessionUser()->getLocation().getY());
 }
 
 void DisplayHandler::drawSpot(int32_t x, int32_t y) {
-  // LV_IMAGE_DECLARE(placeholder);
-  // spotPlaceholder = lv_image_create(lv_screen_active());
-  // lv_image_set_src(spotPlaceholder, &placeholder);
-  // lv_obj_align(spotPlaceholder, LV_ALIGN_CENTER, 0, 0);
-  // lv_obj_set_style_bg_opa(spotPlaceholder, LV_OPA_TRANSP, 0);
-    // Create an object for the pin
+
     spotPlaceholder = lv_obj_create(lv_scr_act());
     lv_obj_set_size(spotPlaceholder, 14, 14);
     lv_obj_clear_flag(spotPlaceholder, LV_OBJ_FLAG_SCROLLABLE);  // Not scrollable
@@ -224,18 +217,9 @@ void DisplayHandler::drawUserLoc(int32_t x, int32_t y) {
   userLoc = lv_obj_create(lv_scr_act());
   lv_obj_set_size(userLoc, 14, 14);
   lv_obj_set_pos(userLoc, x, y);
+  lv_obj_set_style_bg_color(userLoc, LV_COLOR_MAKE(0, 0, 255), 0);
 
-  lv_obj_set_style_bg_opa(userLoc, LV_OPA_TRANSP, 0);
   lv_obj_set_style_border_width(userLoc, 0, 0);
-
-  accuracy = lv_obj_create(userLoc);
-  lv_obj_set_size(accuracy, 14, 14);
-  lv_obj_center(accuracy);
-
-  lv_obj_set_style_radius(accuracy, LV_RADIUS_CIRCLE, 0);
-  lv_obj_set_style_bg_color(accuracy, lv_color_hex(0x0000FF), 0);
-  lv_obj_set_style_bg_opa(accuracy, LV_OPA_20, 0);
-  lv_obj_set_style_border_width(accuracy, 0, 0);
 
   dot = lv_obj_create(userLoc);
   lv_obj_set_size(dot, 1, 1);
@@ -247,6 +231,38 @@ void DisplayHandler::drawUserLoc(int32_t x, int32_t y) {
 
   lv_obj_set_style_border_width(dot, 3, 0);
   lv_obj_set_style_border_color(dot, lv_color_hex(0xFFFFFF), 0);
+}
+
+void DisplayHandler::spotFinishedEventHandler(lv_event_t * e) {
+  sessionManager.completeSpot();
+
+}
+
+void DisplayHandler::spotFinishedEventHandlerStatic(lv_event_t * e) {
+  if (instance) {
+    instance->spotFinishedEventHandler(e);
+  }
+}
+
+void DisplayHandler::drawShovelIcon()
+{
+    shovelBox = lv_obj_create(lv_screen_active());
+    lv_obj_set_size(shovelBox, 40, 40);
+    lv_obj_add_event_cb(shovelBox, spotFinishedEventHandlerStatic, LV_EVENT_CLICKED, NULL);
+
+    lv_obj_align(shovelBox, LV_ALIGN_TOP_RIGHT, -8, 8);
+
+    lv_obj_set_style_radius(shovelBox, 5, 0);
+    lv_obj_set_style_bg_color(shovelBox, lv_color_hex(0xFFFFFF), 0); // white example
+    lv_obj_set_style_bg_opa(shovelBox, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(shovelBox, 0, 0);
+    lv_obj_set_style_pad_all(shovelBox, 0, 0);
+
+    LV_IMAGE_DECLARE(shovel);
+    shovelIcon = lv_image_create(shovelBox);
+    lv_image_set_src(shovelIcon, &shovel);
+
+    lv_obj_center(shovelIcon);
 }
 
 void DisplayHandler::lvObjDelAnim(lv_anim_t* a) {

@@ -17,6 +17,11 @@ void SessionManager::selectUser(String name) {
     }
 }
 
+void SessionManager::completeSpot() {
+    nextSpot->complete();
+    serialPortWriter.writeFinishedSpot(*nextSpot);
+}
+
 void SessionManager::setUserImu(double ax, double ay, double az, double gx, double gy, double gz) {
     selectedUser->imu.setAccelerometer(ax, ay, az);
     selectedUser->imu.setGyroscope(gx, gy, gz);

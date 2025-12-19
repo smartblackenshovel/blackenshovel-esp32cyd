@@ -47,6 +47,7 @@ void SerialPortReader::read() {
         );
         return;
     } else if (msgType == "spot") {
+        Serial.println("New spot arrived");
         sessionUpdater.setNextSpot(
             doc["data"]["id"],
             doc["data"]["lat"],

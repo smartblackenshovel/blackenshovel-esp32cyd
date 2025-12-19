@@ -17,6 +17,7 @@ class SessionManager : public ISessionUpdater {
         void setNextSpot(String id, double lat, double lon, double x, double y) override;
         std::vector<User> getUsers() const { return users; }
         void selectUser(String name);
+        void completeSpot();
         User* getSessionUser() const { return selectedUser; }
         Spot* getNextSpot() const { return nextSpot; }
     private:

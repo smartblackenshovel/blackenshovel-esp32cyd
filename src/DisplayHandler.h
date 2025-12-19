@@ -38,6 +38,8 @@ private:
       INITIALIZE,
       LOAD,
       USER_SELECTION,
+      USER_SELECTED,
+      LOAD_MAP,
       MAP
     };
 
@@ -58,6 +60,8 @@ private:
     lv_obj_t * userLoc = nullptr;
     lv_obj_t * accuracy;
     lv_obj_t * dot;
+    lv_obj_t * shovelBox;
+    lv_obj_t * shovelIcon;
 
     String LVGLVersion;
 
@@ -71,19 +75,21 @@ private:
 
     static void touchscreenReadStatic(lv_indev_t * indev, lv_indev_data_t * data);
     void touchscreenRead(lv_indev_t * indev, lv_indev_data_t * data);
-
     static void lvObjDelAnim(lv_anim_t * a);
     static void lvAnimAllOut(lv_obj_t * obj, uint32_t delay);
     void cleanScreen();
 
     static void eventHandlerStatic(lv_event_t * e);
+    static void spotFinishedEventHandlerStatic(lv_event_t * e);
     void eventHandler(lv_event_t * e);
-
+    void spotFinishedEventHandler(lv_event_t * e);
+;
     void showTextOnCenter(String text);
     void drawSpot(int32_t x, int32_t y);
     void drawUserLoc(int32_t x, int32_t y);
+    void drawShovelIcon();
 
-    void loadScreen();
+    void loadScreen(Screens screen);
     void userSelectionScreen();
     void openMapScreen();
     void updateMapScreen();
