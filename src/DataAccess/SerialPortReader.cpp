@@ -1,0 +1,60 @@
+#include "utils/JsonUtils.h"
+#include "SerialPortReader.h"
+
+std::vector<User> parseUsers(JsonDocument& doc) {
+    std::vector<User> users;
+    JsonArray arr = doc["data"].as<JsonArray>();
+    for (JsonObject obj : arr) {
+        String name = obj["name"].as<String>();
+        String id = obj["id"].as<String>();
+        users.push_back(User(name, id));
+    }
+    return users;
+}
+
+void SerialPortReader::read() {
+    if (!serialPort.available()) {
+        return;
+    }
+    JsonDocument doc;
+    DeserializationError error = deserializeJson(doc, serialPort);
+    if (error) {
+        // Serial.print("Failed to parse JSON from Serial Port: ");
+        // Serial.println(error.c_str());
+        return;
+    }
+    String msgType = doc["msgType"].as<String>();
+    msgType.trim();
+    if (msgType == "users") {
+        sessionUpdater.setUsers(parseUsers(doc));
+        return;
+    } else if (msgType == "imu") {
+        sessionUpdater.setUserImu(
+            doc["data"]["accel"]["x"],
+            doc["data"]["accel"]["y"],
+            doc["data"]["accel"]["z"],
+            doc["data"]["gyro"]["z"],
+            doc["data"]["gyro"]["z"],
+            doc["data"]["gyro"]["z"]
+        );
+        return;
+    } else if (msgType == "userLoc") {
+        sessionUpdater.setUserLoc(
+            doc["data"]["lat"],
+            doc["data"]["lon"],
+            doc["data"]["x"],
+            doc["data"]["y"]
+        );
+        return;
+    } else if (msgType == "spot") {
+        Serial.println("New spot arrived");
+        sessionUpdater.setNextSpot(
+            doc["data"]["id"],
+            doc["data"]["lat"],
+            doc["data"]["lon"],
+            doc["data"]["x"],
+            doc["data"]["y"]
+        );
+        return;
+    }
+}

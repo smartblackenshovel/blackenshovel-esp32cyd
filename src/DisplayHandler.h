@@ -5,6 +5,8 @@
 #include <XPT2046_Touchscreen.h>
 #include <lvgl.h>
 #include <Arduino.h>
+#include "models/User.h"
+#include "SessionManager.h"
 
 // Screen / Touch constants
 #define SCREEN_WIDTH 240
@@ -21,17 +23,30 @@
 
 class DisplayHandler {
 public:
-    DisplayHandler();         // Constructor
+    DisplayHandler(SessionManager& sessionManager);         // Constructor
     void begin();             // Initialize display, touchscreen, LVGL
-    void handle();            // Call periodically (e.g., in loop)
-    void createMainGUI();
+    void refreshGUI();            // Call periodically (e.g., in loop)
+    void updateGUI();
+    void initializeScreen();
     String getLVGLVersion() const { return LVGLVersion; }
+    SessionManager& sessionManager;
 
 private:
     static DisplayHandler* instance;
+
+    enum Screens {
+      INITIALIZE,
+      LOAD,
+      USER_SELECTION,
+      USER_SELECTED,
+      LOAD_MAP,
+      MAP
+    };
+
+    Screens currentScreen;
+
     SPIClass touchscreenSPI;
     XPT2046_Touchscreen touchscreen;
-
     TFT_eSPI tft;
 
     uint32_t draw_buf[DRAW_BUF_SIZE / 4];
@@ -40,6 +55,13 @@ private:
     lv_indev_t * indev;
 
     lv_obj_t * usersList;
+
+    lv_obj_t * spotPlaceholder = nullptr;
+    lv_obj_t * userLoc = nullptr;
+    lv_obj_t * accuracy;
+    lv_obj_t * dot;
+    lv_obj_t * shovelBox;
+    lv_obj_t * shovelIcon;
 
     String LVGLVersion;
 
@@ -53,10 +75,22 @@ private:
 
     static void touchscreenReadStatic(lv_indev_t * indev, lv_indev_data_t * data);
     void touchscreenRead(lv_indev_t * indev, lv_indev_data_t * data);
-
     static void lvObjDelAnim(lv_anim_t * a);
     static void lvAnimAllOut(lv_obj_t * obj, uint32_t delay);
+    void cleanScreen();
 
     static void eventHandlerStatic(lv_event_t * e);
+    static void spotFinishedEventHandlerStatic(lv_event_t * e);
     void eventHandler(lv_event_t * e);
+    void spotFinishedEventHandler(lv_event_t * e);
+;
+    void showTextOnCenter(String text);
+    void drawSpot(int32_t x, int32_t y);
+    void drawUserLoc(int32_t x, int32_t y);
+    void drawShovelIcon();
+
+    void loadScreen(Screens screen);
+    void userSelectionScreen();
+    void openMapScreen();
+    void updateMapScreen();
 };
